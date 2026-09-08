@@ -42,9 +42,11 @@ function search(board: BoardState, player: Player, remainingDice: number[]): Mov
  * All legal complete move sequences for `player` given `dice` (2 values, or [d,d,d,d] for doubles),
  * with the official maximal-play rule enforced: play both dice whenever any legal order allows it;
  * when only one die can ever be played, and both individual dice are independently playable but not
- * together, the larger die must be played.
+ * together, the larger die must be played. Every legal *order* is preserved (not deduplicated) — this
+ * is the version to use for validating a specific move/prefix a player is in the middle of making,
+ * since a legal order must not be rejected just because some other order reaches the same board.
  */
-export function generateLegalSequences(board: BoardState, player: Player, dice: number[]): MoveSequence[] {
+export function generateLegalSequencesAllOrders(board: BoardState, player: Player, dice: number[]): MoveSequence[] {
   const all = search(board, player, dice).filter((seq) => seq.length > 0);
 
   if (all.length === 0) return [[]];
@@ -62,7 +64,16 @@ export function generateLegalSequences(board: BoardState, player: Player, dice: 
     }
   }
 
-  return dedupeByResultingBoard(board, player, candidates);
+  return candidates;
+}
+
+/**
+ * Same legal sequences as generateLegalSequencesAllOrders, but deduplicated to one representative
+ * order per distinct resulting board position. Use this for display/AI purposes (the advisor, the
+ * computer player) where showing/scoring the same outcome multiple times would be redundant.
+ */
+export function generateLegalSequences(board: BoardState, player: Player, dice: number[]): MoveSequence[] {
+  return dedupeByResultingBoard(board, player, generateLegalSequencesAllOrders(board, player, dice));
 }
 
 /** Keep one representative sequence per distinct resulting board position. */

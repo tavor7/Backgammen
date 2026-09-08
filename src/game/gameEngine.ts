@@ -1,5 +1,5 @@
 import { addCheckerAt, createEmptyBoard, createInitialBoard, getPoint, homeBoardRange, opponent, withBar, withBorneOff } from './board';
-import { generateLegalSequences } from './moveGenerator';
+import { generateLegalSequences, generateLegalSequencesAllOrders } from './moveGenerator';
 import type { BoardEdit, BoardState, CheckerMove, GameMode, GameState, MoveSequence, Player, TurnRecord } from './types';
 
 function now(): number {
@@ -42,10 +42,21 @@ export function rollDice(state: GameState, dice: [number, number]): GameState {
   };
 }
 
-/** All legal complete sequences for the current player's rolled dice. */
+/** All legal complete sequences for the current player's rolled dice, deduplicated by resulting position. */
 export function legalSequencesForState(state: GameState): MoveSequence[] {
   if (!state.dice.rolled) return [];
   return generateLegalSequences(state.board, state.currentPlayer, state.dice.remaining);
+}
+
+/**
+ * Same as legalSequencesForState but preserving every legal move order (not deduplicated).
+ * Use this to validate a specific in-progress sequence/prefix a player is building via tap-to-move —
+ * deduplication would otherwise reject a legal order just because a different order reaches the
+ * same final board.
+ */
+export function legalSequencesForStateAllOrders(state: GameState): MoveSequence[] {
+  if (!state.dice.rolled) return [];
+  return generateLegalSequencesAllOrders(state.board, state.currentPlayer, state.dice.remaining);
 }
 
 /** Determine gammon/backgammon/single result for `winner` given the board at the moment of the win. */

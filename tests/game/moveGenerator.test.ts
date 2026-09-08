@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyBoard, createInitialBoard, withBar } from '../../src/game/board';
-import { applySequence, generateLegalSequences } from '../../src/game/moveGenerator';
+import { applySequence, generateLegalSequences, generateLegalSequencesAllOrders } from '../../src/game/moveGenerator';
 import type { BoardState } from '../../src/game/types';
 
 function place(b: BoardState, point: number, owner: 'white' | 'black', count: number): BoardState {
@@ -97,6 +97,36 @@ describe('generateLegalSequences: deduplication', () => {
     const boards = sequences.map((s) => JSON.stringify(applySequence(b, 'white', s)));
     const uniqueBoards = new Set(boards);
     expect(uniqueBoards.size).toBe(boards.length);
+  });
+});
+
+describe('generateLegalSequencesAllOrders vs generateLegalSequences (dedup)', () => {
+  it('preserves every legal move order, even ones the deduplicated list collapses away', () => {
+    // Two independent white checkers, each capable of playing either die with no interaction.
+    // Two distinct outcomes exist (which checker gets which die), each reachable via 2 orders.
+    let b = place(createEmptyBoard(), 1, 'white', 1);
+    b = place(b, 10, 'white', 1);
+    const allOrders = generateLegalSequencesAllOrders(b, 'white', [2, 3]);
+    const deduped = generateLegalSequences(b, 'white', [2, 3]);
+
+    // Deduplication by resulting board strictly collapses some legal orders away.
+    expect(allOrders.length).toBeGreaterThan(deduped.length);
+
+    // A UI validating "the player chose to move the point-10 checker first" must find that
+    // order among allOrders, even though the deduped list may only keep the point-1-first version.
+    const startsAtTen = allOrders.filter((seq) => seq[0].from === 10);
+    expect(startsAtTen.length).toBeGreaterThan(0);
+  });
+
+  it('never rejects a legal in-progress prefix just because another order reaches the same board', () => {
+    let b = place(createEmptyBoard(), 1, 'white', 1);
+    b = place(b, 10, 'white', 1);
+    const allOrders = generateLegalSequencesAllOrders(b, 'white', [2, 3]);
+
+    // Simulate a player who taps the point-10 checker first, playing die 3 (10 -> 13).
+    const firstMove = { from: 10, to: 13, die: 3, hit: false };
+    const validPrefixExists = allOrders.some((seq) => seq[0].from === firstMove.from && seq[0].to === firstMove.to && seq[0].die === firstMove.die);
+    expect(validPrefixExists).toBe(true);
   });
 });
 

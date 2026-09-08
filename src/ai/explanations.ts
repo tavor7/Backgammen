@@ -14,7 +14,11 @@ const TEMPLATES: FeatureTemplate[] = [
     typicalRange: 3,
     category: 'defense',
     describe: (before, after, delta) =>
-      delta < 0 ? `reduces your exposed checkers from ${before} to ${after}` : delta > 0 ? `leaves ${after} checkers exposed as blots` : null,
+      delta < 0
+        ? `reduces your exposed checkers from ${before} to ${after}`
+        : delta > 0
+          ? `leaves ${after} checker${after === 1 ? '' : 's'} exposed as blot${after === 1 ? '' : 's'}`
+          : null,
   },
   {
     key: 'blotExposure',
