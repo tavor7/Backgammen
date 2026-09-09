@@ -14,7 +14,7 @@ export function Bar({ whiteCount, blackCount, selectable, selected, onSelect }: 
     <div className="bar">
       <div className="bar__section">
         {Array.from({ length: whiteCount }).map((_, i) => (
-          <Checker key={i} player="white" />
+          <Checker key={i} player="white" size={18} />
         ))}
       </div>
       {(selectable || whiteCount > 0 || blackCount > 0) && (
@@ -28,7 +28,7 @@ export function Bar({ whiteCount, blackCount, selectable, selected, onSelect }: 
       )}
       <div className="bar__section">
         {Array.from({ length: blackCount }).map((_, i) => (
-          <Checker key={i} player="black" />
+          <Checker key={i} player="black" size={18} />
         ))}
       </div>
     </div>

@@ -440,6 +440,11 @@
   display: flex;
   align-items: stretch;
   justify-content: center;
+  /* Grid items default to min-width:auto (their content's min-content size). A checker sitting
+     on the bar has a fixed pixel width that's bigger than the bar's intended 0.5fr share, so
+     without this the whole track (and the point columns it steals space from) balloons and
+     distorts the board the moment a checker lands here. */
+  min-width: 0;
 }
 
 .point {
