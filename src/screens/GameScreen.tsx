@@ -266,47 +266,49 @@ export function GameScreen() {
         </div>
       )}
 
-      <Board
-        board={previewCandidate ? previewBoard : board}
-        currentPlayer={game.currentPlayer}
-        interactive={interactive && !previewCandidate}
-        editMode={game.editMode}
-        selected={selected}
-        destinationPoints={previewCandidate ? [] : landingSpots.map((s) => s.to)}
-        onPointClick={handlePointClick}
-        onBarClick={handleBarClick}
-        onBearOffClick={handleBearOffClick}
-        mustEnterFromBar={mustEnter}
-        lastMoveCounts={previewCandidate ? new Map() : lastMoveCounts}
-        hitProbabilities={hitProbabilities}
-        animationTick={game.moveHistory.length}
-        hitPoints={previewCandidate ? new Set() : hitPoints}
-        orientation={boardOrientation}
-      />
+      <div className="board-wrapper">
+        <Board
+          board={previewCandidate ? previewBoard : board}
+          currentPlayer={game.currentPlayer}
+          interactive={interactive && !previewCandidate}
+          editMode={game.editMode}
+          selected={selected}
+          destinationPoints={previewCandidate ? [] : landingSpots.map((s) => s.to)}
+          onPointClick={handlePointClick}
+          onBarClick={handleBarClick}
+          onBearOffClick={handleBearOffClick}
+          mustEnterFromBar={mustEnter}
+          lastMoveCounts={previewCandidate ? new Map() : lastMoveCounts}
+          hitProbabilities={hitProbabilities}
+          animationTick={game.moveHistory.length}
+          hitPoints={previewCandidate ? new Set() : hitPoints}
+          orientation={boardOrientation}
+        />
 
-      <div className="dice-row">
-        {(['white', 'black'] as const).map((p) => {
-          const isActive = p === game.currentPlayer;
-          if (!isActive && !lastRolls[p]) return null;
-          return (
-            <div key={p} className={`player-dice${isActive ? ' player-dice--active' : ''}`}>
-              <span className="player-dice__label">{t(`player.${p}`)}</span>
-              {isActive ? (
-                <Dice
-                  key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`}
-                  rolled={game.dice.rolled}
-                  remaining={remainingDice}
-                  canRoll={game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER)}
-                  onRoll={() => rollDice()}
-                />
-              ) : (
-                <div className="dice--static">
-                  <Dice rolled={lastRolls[p]} remaining={[]} interactive={false} />
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <div className="dice-row">
+          {(['white', 'black'] as const).map((p) => {
+            const isActive = p === game.currentPlayer;
+            if (!isActive && !lastRolls[p]) return null;
+            return (
+              <div key={p} className={`player-dice${isActive ? ' player-dice--active' : ''}`}>
+                <span className="player-dice__label">{t(`player.${p}`)}</span>
+                {isActive ? (
+                  <Dice
+                    key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`}
+                    rolled={game.dice.rolled}
+                    remaining={remainingDice}
+                    canRoll={game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER)}
+                    onRoll={() => rollDice()}
+                  />
+                ) : (
+                  <div className="dice--static">
+                    <Dice rolled={lastRolls[p]} remaining={[]} interactive={false} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
       {computerThinking && <div className="thinking-indicator">{t('gameScreen.computerThinking')}</div>}
       {interactive && pendingMoves.length > 0 && (

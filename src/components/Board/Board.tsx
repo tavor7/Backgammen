@@ -101,6 +101,7 @@ export function Board({
 
   return (
     <div className="board">
+      <div className="board__hinge-line" />
       <NumberStrip points={TOP_ROW} />
       <div className="board__row board__row--top">
         {TOP_ROW.slice(0, 6).map((p) => renderPoint(p, 'down'))}
