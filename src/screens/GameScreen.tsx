@@ -149,7 +149,7 @@ export function GameScreen() {
         if (cancelled) return;
         // Expert gets a slight, user-requested dice edge: best-of-two rolls, still genuinely
         // random, just biased toward bigger/doublet rolls on average.
-        rollDice(difficulty === 'expert' ? rollFavorableDice() : undefined);
+        rollDice(difficulty === 'expert' ? rollFavorableDice(game!.board, COMPUTER_PLAYER) : undefined);
         return;
       }
       if (game!.turnPhase === 'awaitingMove' && game!.dice.rolled) {

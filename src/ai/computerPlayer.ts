@@ -5,11 +5,11 @@ import { evaluate } from './evaluator';
 import { ALL_ROLLS } from './probabilities';
 import type { Difficulty } from './difficulty';
 
-function diceValuesFor(dice: [number, number]): number[] {
+export function diceValuesFor(dice: [number, number]): number[] {
   return dice[0] === dice[1] ? [dice[0], dice[0], dice[0], dice[0]] : [dice[0], dice[1]];
 }
 
-function scoredSequences(board: BoardState, player: Player, dice: number[]) {
+export function scoredSequences(board: BoardState, player: Player, dice: number[]) {
   const sequences = generateLegalSequences(board, player, dice);
   return sequences.map((sequence) => {
     const resultingBoard = applySequence(board, player, sequence);
