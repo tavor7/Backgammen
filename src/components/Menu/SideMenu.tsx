@@ -1,4 +1,6 @@
 import { useUiStore } from '../../state/uiStore';
+import { useT, useLanguageStore } from '../../i18n/useT';
+import { LANGUAGE_LABEL, type Language } from '../../i18n/translations';
 
 interface SideMenuProps {
   open: boolean;
@@ -12,7 +14,10 @@ interface SideMenuProps {
 }
 
 export function SideMenu({ open, onClose, onNewGame, onHome, onUndo, onRedo, canUndo, canRedo }: SideMenuProps) {
+  const t = useT();
   const askConfirm = useUiStore((s) => s.askConfirm);
+  const language = useLanguageStore((s) => s.language);
+  const setLanguage = useLanguageStore((s) => s.setLanguage);
 
   if (!open) return null;
 
@@ -25,9 +30,9 @@ export function SideMenu({ open, onClose, onNewGame, onHome, onUndo, onRedo, can
     <div className="side-menu-overlay" onClick={onClose}>
       <div className="side-menu" onClick={(e) => e.stopPropagation()}>
         <div className="side-menu__header">
-          <span>Menu</span>
+          <span>{t('menu.title')}</span>
           <button type="button" className="btn btn--small" onClick={onClose}>
-            Close
+            {t('menu.close')}
           </button>
         </div>
         <button
@@ -39,7 +44,7 @@ export function SideMenu({ open, onClose, onNewGame, onHome, onUndo, onRedo, can
           }}
           disabled={!canUndo}
         >
-          Undo
+          {t('menu.undo')}
         </button>
         <button
           type="button"
@@ -50,22 +55,37 @@ export function SideMenu({ open, onClose, onNewGame, onHome, onUndo, onRedo, can
           }}
           disabled={!canRedo}
         >
-          Redo
+          {t('menu.redo')}
         </button>
         <button
           type="button"
           className="side-menu__item side-menu__item--danger"
-          onClick={() => confirmAndClose('Discard the current game and start a new one?', 'New Game', onNewGame)}
+          onClick={() => confirmAndClose(t('menu.confirmNewGame'), t('menu.newGame'), onNewGame)}
         >
-          New Game
+          {t('menu.newGame')}
         </button>
         <button
           type="button"
           className="side-menu__item side-menu__item--danger"
-          onClick={() => confirmAndClose('Leave this game and return home?', 'Go Home', onHome)}
+          onClick={() => confirmAndClose(t('menu.confirmHome'), t('menu.home'), onHome)}
         >
-          Home
+          {t('menu.home')}
         </button>
+        <div className="side-menu__lang">
+          <span className="side-menu__lang-label">{t('home.language')}</span>
+          <div className="side-menu__lang-options">
+            {(['en', 'he'] as Language[]).map((l) => (
+              <button
+                key={l}
+                type="button"
+                className={`btn btn--small${language === l ? ' btn--active' : ''}`}
+                onClick={() => setLanguage(l)}
+              >
+                {LANGUAGE_LABEL[l]}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

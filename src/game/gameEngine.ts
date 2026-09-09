@@ -258,9 +258,9 @@ function applyBoardEditToBoard(board: BoardState, edit: BoardEdit): BoardState {
   }
 }
 
-export interface BoardValidationWarning {
-  message: string;
-}
+// Structured (not pre-rendered English text) so callers can localize — this module stays
+// framework/locale-agnostic, matching the rest of game/.
+export type BoardValidationWarning = { code: 'checkerCount'; player: Player; count: number } | { code: 'orphanPoint'; point: number };
 
 /** Non-blocking sanity checks for manually edited positions. Never prevents editing. */
 export function validateBoardState(board: BoardState): BoardValidationWarning[] {
@@ -269,13 +269,13 @@ export function validateBoardState(board: BoardState): BoardValidationWarning[] 
     const onPoints = board.points.reduce((sum, p) => (p.owner === player ? sum + p.count : sum), 0);
     const total = onPoints + board.bar[player] + board.borneOff[player];
     if (total !== 15) {
-      warnings.push({ message: `${player === 'white' ? 'White' : 'Black'} currently has ${total} checkers.` });
+      warnings.push({ code: 'checkerCount', player, count: total });
     }
   });
   for (let p = 1; p <= 24; p++) {
     const point = getPoint(board, p);
     if (point.owner === null && point.count !== 0) {
-      warnings.push({ message: `Point ${p} has a checker count but no owner.` });
+      warnings.push({ code: 'orphanPoint', point: p });
     }
   }
   return warnings;

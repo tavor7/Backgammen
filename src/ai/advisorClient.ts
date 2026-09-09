@@ -1,6 +1,7 @@
 import type { Difficulty } from './difficulty';
 import type { RankedCandidate } from './moveAdvisor';
 import type { BoardState, Player } from '../game/types';
+import type { Language } from '../i18n/translations';
 import type { WorkerRequest, WorkerResponse } from './advisorWorker';
 
 let worker: Worker | null = null;
@@ -28,9 +29,9 @@ function send(request: WorkerRequest): Promise<WorkerResponse> {
   });
 }
 
-export async function requestAdvice(board: BoardState, player: Player, dice: number[], topN: number): Promise<RankedCandidate[]> {
+export async function requestAdvice(board: BoardState, player: Player, dice: number[], topN: number, language: Language = 'en'): Promise<RankedCandidate[]> {
   const id = nextId++;
-  const response = await send({ id, type: 'advise', board, player, dice, topN });
+  const response = await send({ id, type: 'advise', board, player, dice, topN, language });
   return response.type === 'advise' ? response.candidates : [];
 }
 

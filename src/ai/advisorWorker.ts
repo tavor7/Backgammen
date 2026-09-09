@@ -2,9 +2,10 @@ import { chooseComputerMove } from './computerPlayer';
 import type { Difficulty } from './difficulty';
 import { getTopCandidates } from './moveAdvisor';
 import type { BoardState, Player } from '../game/types';
+import type { Language } from '../i18n/translations';
 
 export type WorkerRequest =
-  | { id: number; type: 'advise'; board: BoardState; player: Player; dice: number[]; topN: number }
+  | { id: number; type: 'advise'; board: BoardState; player: Player; dice: number[]; topN: number; language: Language }
   | { id: number; type: 'computerMove'; board: BoardState; player: Player; dice: [number, number]; difficulty: Difficulty };
 
 export type WorkerResponse =
@@ -14,7 +15,7 @@ export type WorkerResponse =
 self.onmessage = (event: MessageEvent<WorkerRequest>) => {
   const msg = event.data;
   if (msg.type === 'advise') {
-    const candidates = getTopCandidates(msg.board, msg.player, msg.dice, msg.topN);
+    const candidates = getTopCandidates(msg.board, msg.player, msg.dice, msg.topN, msg.language);
     const response: WorkerResponse = { id: msg.id, type: 'advise', candidates };
     (self as unknown as Worker).postMessage(response);
   } else if (msg.type === 'computerMove') {

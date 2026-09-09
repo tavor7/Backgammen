@@ -146,6 +146,13 @@
   background: radial-gradient(circle at top, #2a1d13, var(--ink) 70%);
 }
 
+.home-screen__lang-switch {
+  align-self: flex-end;
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
 .home-screen__title {
   font-size: clamp(1.7rem, 9vw, 2.6rem);
   letter-spacing: 0.18em;
@@ -328,6 +335,10 @@
 /* ---------- Board ---------- */
 
 .board {
+  /* The board is a fixed game object, independent of UI language — lock its internal grid flow to
+     LTR so it never mirrors under dir="rtl" (Grid/Flexbox placement otherwise follows the inherited
+     writing direction). */
+  direction: ltr;
   position: relative;
   background: linear-gradient(180deg, var(--wood-mid), var(--wood-dark));
   border-radius: 14px;
@@ -912,7 +923,7 @@
 }
 
 .move-history__correct {
-  margin-left: auto;
+  margin-inline-start: auto;
   background: none;
   border: none;
   color: var(--gold);
@@ -1052,7 +1063,7 @@
 .candidate-card__pros,
 .candidate-card__cons {
   margin: 0;
-  padding-left: 16px;
+  padding-inline-start: 16px;
   font-size: 0.78rem;
   color: #c7b89e;
 }
@@ -1079,7 +1090,7 @@
 
 .advisor-fab {
   position: fixed;
-  right: 18px;
+  inset-inline-end: 18px;
   bottom: calc(18px + env(safe-area-inset-bottom));
   z-index: 40;
   width: 60px;
@@ -1137,7 +1148,7 @@
   width: min(78vw, 280px);
   height: 100%;
   background: var(--panel-bg);
-  border-left: 1px solid #46362299;
+  border-inline-start: 1px solid #46362299;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -1147,6 +1158,18 @@
 
 @keyframes sideMenuSlideIn {
   0% { transform: translateX(100%); }
+  100% { transform: translateX(0); }
+}
+
+/* The overlay's justify-content: flex-end already mirrors the drawer to the opposite physical
+   side under dir="rtl" (flexbox main-axis start/end follow inline direction) — but the slide
+   keyframe is a raw pixel transform, which doesn't, so it needs an explicit RTL variant. */
+[dir='rtl'] .side-menu {
+  animation-name: sideMenuSlideInRtl;
+}
+
+@keyframes sideMenuSlideInRtl {
+  0% { transform: translateX(-100%); }
   100% { transform: translateX(0); }
 }
 
@@ -1165,7 +1188,7 @@
   border: 1px solid #55432c;
   border-radius: 8px;
   padding: 12px 14px;
-  text-align: left;
+  text-align: start;
   font-size: 0.95rem;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.1s ease;
@@ -1186,6 +1209,27 @@
 
 .side-menu__item--danger {
   border-color: #6b3a34;
+}
+
+.side-menu__lang {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #46362299;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.side-menu__lang-label {
+  color: #a3927a;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.side-menu__lang-options {
+  display: flex;
+  gap: 6px;
 }
 
 /* ---------- Confirm dialog ---------- */

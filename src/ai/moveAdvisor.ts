@@ -1,5 +1,6 @@
 import { applySequence, generateLegalSequences } from '../game/moveGenerator';
 import type { BoardState, MoveSequence, Player } from '../game/types';
+import type { Language } from '../i18n/translations';
 import { evaluate } from './evaluator';
 import { explain } from './explanations';
 
@@ -29,7 +30,7 @@ function ratingFor(scoreGapFromBest: number, spread: number): Rating {
  * Ranks all legal move sequences for the given roll and returns the top `topN` candidates
  * with score, normalized rating, and a natural-language explanation of why each move is good.
  */
-export function getTopCandidates(board: BoardState, player: Player, dice: number[], topN = 3): RankedCandidate[] {
+export function getTopCandidates(board: BoardState, player: Player, dice: number[], topN = 3, language: Language = 'en'): RankedCandidate[] {
   const before = evaluate(board, player);
   const sequences = generateLegalSequences(board, player, dice).filter((s) => s.length > 0);
 
@@ -48,7 +49,7 @@ export function getTopCandidates(board: BoardState, player: Player, dice: number
   const spread = Math.max(bestScore - worstScore, 1e-6);
 
   return scored.slice(0, topN).map((candidate, index) => {
-    const { summary, pros, cons } = explain(before.features, candidate.afterFeatures);
+    const { summary, pros, cons } = explain(before.features, candidate.afterFeatures, language);
     return {
       rank: index + 1,
       sequence: candidate.sequence,

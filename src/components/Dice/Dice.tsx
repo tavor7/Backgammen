@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useT } from '../../i18n/useT';
 
 interface DiceProps {
   rolled: [number, number] | null;
@@ -70,6 +71,7 @@ function Die({ finalValue, used, startDelay }: { finalValue: number; used: boole
 }
 
 export function Dice({ rolled, remaining, canRoll = false, onRoll }: DiceProps) {
+  const t = useT();
   if (!rolled) {
     return (
       <button
@@ -80,7 +82,7 @@ export function Dice({ rolled, remaining, canRoll = false, onRoll }: DiceProps) 
       >
         <div className="dice__placeholder-die" />
         <div className="dice__placeholder-die" />
-        <span className="dice__empty-label">{canRoll ? 'Tap to roll' : 'Roll to begin'}</span>
+        <span className="dice__empty-label">{canRoll ? t('dice.tapToRoll') : t('dice.rollToBegin')}</span>
       </button>
     );
   }

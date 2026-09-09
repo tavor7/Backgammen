@@ -1,4 +1,5 @@
 import type { RankedCandidate } from '../../ai/moveAdvisor';
+import { useT } from '../../i18n/useT';
 import { CandidateMoveCard } from './CandidateMoveCard';
 
 interface AnalysisPanelProps {
@@ -13,17 +14,18 @@ interface AnalysisPanelProps {
 }
 
 export function AnalysisPanel({ open, loading, candidates, previewCandidate, onClose, onPreview, onStopPreview, onPlay }: AnalysisPanelProps) {
+  const t = useT();
   if (!open) return null;
 
   return (
     <div className="analysis-panel-overlay" onClick={onClose}>
       <div className="analysis-panel" onClick={(e) => e.stopPropagation()}>
         <div className="analysis-panel__header">
-          <h2>Best Moves</h2>
-          <button type="button" className="btn btn--small" onClick={onClose}>Close</button>
+          <h2>{t('advisor.title')}</h2>
+          <button type="button" className="btn btn--small" onClick={onClose}>{t('advisor.close')}</button>
         </div>
-        {loading && <div className="analysis-panel__loading">Analyzing position…</div>}
-        {!loading && candidates.length === 0 && <div className="analysis-panel__loading">No legal moves for this roll.</div>}
+        {loading && <div className="analysis-panel__loading">{t('advisor.analyzing')}</div>}
+        {!loading && candidates.length === 0 && <div className="analysis-panel__loading">{t('advisor.noMoves')}</div>}
         {!loading && candidates.map((c) => (
           <CandidateMoveCard
             key={c.rank}

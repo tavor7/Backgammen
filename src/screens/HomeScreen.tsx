@@ -3,9 +3,14 @@ import { useGameStore } from '../state/gameStore';
 import { useUiStore } from '../state/uiStore';
 import type { GameMode } from '../game/types';
 import type { Difficulty } from '../ai/difficulty';
-import { DIFFICULTY_LABELS } from '../ai/difficulty';
+import { useT, useLanguageStore } from '../i18n/useT';
+import type { Language } from '../i18n/translations';
+import { LANGUAGE_LABEL } from '../i18n/translations';
 
 export function HomeScreen() {
+  const t = useT();
+  const language = useLanguageStore((s) => s.language);
+  const setLanguage = useLanguageStore((s) => s.setLanguage);
   const newGame = useGameStore((s) => s.newGame);
   const loadLastActive = useGameStore((s) => s.loadLastActive);
   const goToGame = useUiStore((s) => s.goToGame);
@@ -29,19 +34,32 @@ export function HomeScreen() {
 
   return (
     <div className="home-screen">
-      <h1 className="home-screen__title">BACKGAMMON</h1>
-      <p className="home-screen__subtitle">Choose Mode</p>
+      <div className="home-screen__lang-switch">
+        {(['en', 'he'] as Language[]).map((l) => (
+          <button
+            key={l}
+            type="button"
+            className={`btn btn--small${language === l ? ' btn--active' : ''}`}
+            onClick={() => setLanguage(l)}
+          >
+            {LANGUAGE_LABEL[l]}
+          </button>
+        ))}
+      </div>
+
+      <h1 className="home-screen__title">{t('home.title')}</h1>
+      <p className="home-screen__subtitle">{t('home.subtitle')}</p>
 
       {continuable && (
         <button type="button" className="home-screen__continue" onClick={goToGame}>
-          Continue Game ({continuable.mode === 'vsComputer' ? 'vs Computer' : 'Live Assistant'})
+          {t('home.continue', { mode: continuable.mode === 'vsComputer' ? t('mode.vsComputer') : t('mode.liveAssistant') })}
         </button>
       )}
 
       <div className="home-screen__modes">
         <div className="mode-card">
-          <h2>Play vs Computer</h2>
-          <p>Play a full game of Backgammon against an AI opponent.</p>
+          <h2>{t('home.vsComputer.title')}</h2>
+          <p>{t('home.vsComputer.desc')}</p>
           <div className="mode-card__difficulty">
             {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
               <button
@@ -50,25 +68,25 @@ export function HomeScreen() {
                 className={`btn btn--small${difficulty === d ? ' btn--active' : ''}`}
                 onClick={() => setDifficulty(d)}
               >
-                {DIFFICULTY_LABELS[d]}
+                {t(`difficulty.${d}`)}
               </button>
             ))}
           </div>
           <button type="button" className="btn btn--primary btn--wide" onClick={() => start('vsComputer')}>
-            Play vs Computer
+            {t('home.vsComputer.btn')}
           </button>
         </div>
 
         <div className="mode-card">
-          <h2>Live Game Assistant</h2>
-          <p>Reproduce a physical board and get move advice while playing in person.</p>
+          <h2>{t('home.liveAssistant.title')}</h2>
+          <p>{t('home.liveAssistant.desc')}</p>
           <button type="button" className="btn btn--primary btn--wide" onClick={() => start('liveAssistant')}>
-            Live Game Assistant
+            {t('home.liveAssistant.btn')}
           </button>
         </div>
       </div>
 
-      <p className="home-screen__credit">Built by Amit</p>
+      <p className="home-screen__credit">{t('home.credit')}</p>
     </div>
   );
 }

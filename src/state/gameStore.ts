@@ -11,6 +11,7 @@ import {
   truncateHistoryAt as engineTruncateHistoryAt,
   undo as engineUndo,
   validateBoardState,
+  type BoardValidationWarning,
 } from '../game/gameEngine';
 import { applySequence as applySequenceToBoard, generateLegalSequences, generateLegalSequencesAllOrders } from '../game/moveGenerator';
 import type { BoardEdit, BoardState, CheckerMove, GameMode, GameState, MoveSequence } from '../game/types';
@@ -61,7 +62,7 @@ interface GameStore {
   legalDestinationsFrom: (point: number | 'bar') => CheckerMove[];
   /** Every way to land the checker at `point` right now, including combined-both-dice landings. */
   landingSpotsFrom: (point: number | 'bar') => LandingSpot[];
-  currentWarnings: () => { message: string }[];
+  currentWarnings: () => BoardValidationWarning[];
   /** If exactly one full legal sequence exists for this roll (from the current committed board), return it. */
   onlyLegalSequence: () => MoveSequence | null;
 }

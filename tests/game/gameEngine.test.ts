@@ -133,7 +133,7 @@ describe('manual board editing', () => {
     let b = createEmptyBoard();
     b = place(b, 1, 'white', 16);
     const warnings = validateBoardState(b);
-    expect(warnings.some((w) => w.message.includes('White'))).toBe(true);
+    expect(warnings.some((w) => w.code === 'checkerCount' && w.player === 'white' && w.count === 16)).toBe(true);
   });
 
   it('validateBoardState reports no warnings for the standard initial position', () => {

@@ -17,6 +17,7 @@ import { probabilityBlotIsHit } from '../ai/probabilities';
 import { hashBoard, opponent } from '../game/board';
 import { mustEnterFromBar as engineMustEnterFromBar } from '../game/rules';
 import type { BoardState } from '../game/types';
+import { useT, useLanguageStore } from '../i18n/useT';
 
 const HUMAN_PLAYER = 'white';
 const COMPUTER_PLAYER = 'black';
@@ -33,6 +34,8 @@ function computeBlotHitProbabilities(board: BoardState): Map<number, number> {
 }
 
 export function GameScreen() {
+  const t = useT();
+  const language = useLanguageStore((s) => s.language);
   const game = useGameStore((s) => s.game);
   const pendingMoves = useGameStore((s) => s.pendingMoves);
   const rollDice = useGameStore((s) => s.rollDice);
@@ -169,7 +172,7 @@ export function GameScreen() {
     if (!game!.dice.rolled) return;
     openAdvisor();
     setAdvisorLoading(true);
-    const result = await requestAdvice(game!.board, game!.currentPlayer, game!.dice.remaining, topN);
+    const result = await requestAdvice(game!.board, game!.currentPlayer, game!.dice.remaining, topN, language);
     setCandidates(result);
     setAdvisorLoading(false);
   }
@@ -199,10 +202,10 @@ export function GameScreen() {
 
   return (
     <div className="game-screen">
-      {game.status === 'won' && (
+      {game.status === 'won' && game.winner && (
         <div className="win-banner">
-          <strong>{game.winner === 'white' ? 'White' : 'Black'} wins</strong>
-          {game.winType && game.winType !== 'single' ? ` by a ${game.winType}!` : '!'}
+          <strong>{t('gameScreen.win', { player: t(`player.${game.winner}`) })}</strong>
+          {t(`gameScreen.winSuffix.${game.winType ?? 'single'}`)}
         </div>
       )}
 
@@ -230,15 +233,15 @@ export function GameScreen() {
         canRoll={game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER)}
         onRoll={() => rollDice()}
       />
-      {computerThinking && <div className="thinking-indicator">Computer is thinking…</div>}
+      {computerThinking && <div className="thinking-indicator">{t('gameScreen.computerThinking')}</div>}
       {interactive && pendingMoves.length > 0 && (
         <button type="button" className="btn btn--wide" onClick={undoPendingMove}>
-          Undo Last Move ({pendingMoves[pendingMoves.length - 1].from}/{pendingMoves[pendingMoves.length - 1].to})
+          {t('gameScreen.undoLastMove', { move: `${pendingMoves[pendingMoves.length - 1].from}/${pendingMoves[pendingMoves.length - 1].to}` })}
         </button>
       )}
       {interactive && pendingMoves.length === 0 && onlyLegalSequence && (
         <button type="button" className="btn btn--primary btn--wide" onClick={() => playSequence(onlyLegalSequence)}>
-          Play Only Move ({onlyLegalSequence.map((m) => `${m.from}/${m.to}`).join(' ')})
+          {t('gameScreen.playOnlyMove', { sequence: onlyLegalSequence.map((m) => `${m.from}/${m.to}`).join(' ') })}
         </button>
       )}
 
@@ -260,10 +263,10 @@ export function GameScreen() {
         className="advisor-fab"
         onClick={handleOpenAdvisor}
         disabled={!game.dice.rolled || game.editMode || pendingMoves.length > 0}
-        aria-label="Advisor"
+        aria-label={t('advisor.label')}
       >
         <span className="advisor-fab__icon">💡</span>
-        Advisor
+        {t('advisor.label')}
       </button>
 
       <SideMenu
