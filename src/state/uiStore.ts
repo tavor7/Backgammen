@@ -59,11 +59,7 @@ interface UiStore {
 
   boardOrientation: BoardOrientation;
   setBoardOrientation: (o: BoardOrientation) => void;
-  /** Pending "which corner do you want your checkers to end up in" prompt, resolved by OrientationDialog. */
-  orientationPromptCallback: (() => void) | null;
-  askOrientation: (onChosen: () => void) => void;
-  resolveOrientationPrompt: (o: BoardOrientation) => void;
-  dismissOrientationPrompt: () => void;
+  flipBoard: () => void;
 }
 
 export const useUiStore = create<UiStore>((set, get) => ({
@@ -114,17 +110,5 @@ export const useUiStore = create<UiStore>((set, get) => ({
     }
     set({ boardOrientation: o });
   },
-  orientationPromptCallback: null,
-  askOrientation: (onChosen) => set({ orientationPromptCallback: onChosen }),
-  resolveOrientationPrompt: (o) => {
-    get().setBoardOrientation(o);
-    const cb = get().orientationPromptCallback;
-    set({ orientationPromptCallback: null });
-    cb?.();
-  },
-  dismissOrientationPrompt: () => {
-    const cb = get().orientationPromptCallback;
-    set({ orientationPromptCallback: null });
-    cb?.();
-  },
+  flipBoard: () => get().setBoardOrientation(get().boardOrientation === 'bottomLeft' ? 'bottomRight' : 'bottomLeft'),
 }));

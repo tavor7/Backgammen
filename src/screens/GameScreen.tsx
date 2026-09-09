@@ -10,7 +10,6 @@ import { AnalysisPanel } from '../components/MoveAdvisor/AnalysisPanel';
 import { SideMenu } from '../components/Menu/SideMenu';
 import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import { Toast } from '../components/Toast/Toast';
-import { OrientationDialog } from '../components/OrientationDialog/OrientationDialog';
 import { useGameStore } from '../state/gameStore';
 import { useUiStore } from '../state/uiStore';
 import { requestAdvice, requestComputerMove } from '../ai/advisorClient';
@@ -75,9 +74,7 @@ export function GameScreen() {
   const confirmDialog = useUiStore((s) => s.confirmDialog);
   const dismissConfirm = useUiStore((s) => s.dismissConfirm);
   const boardOrientation = useUiStore((s) => s.boardOrientation);
-  const askOrientation = useUiStore((s) => s.askOrientation);
-  const resolveOrientationPrompt = useUiStore((s) => s.resolveOrientationPrompt);
-  const orientationPromptCallback = useUiStore((s) => s.orientationPromptCallback);
+  const flipBoard = useUiStore((s) => s.flipBoard);
   const toast = useUiStore((s) => s.toast);
   const showToast = useUiStore((s) => s.showToast);
   const clearToast = useUiStore((s) => s.clearToast);
@@ -349,12 +346,14 @@ export function GameScreen() {
       <SideMenu
         open={menuOpen}
         onClose={closeMenu}
-        onNewGame={() => askOrientation(() => newGame(game.mode))}
+        onNewGame={() => newGame(game.mode)}
         onHome={goHome}
         onUndo={undo}
         onRedo={redo}
         canUndo={game.moveHistory.length > 0}
         canRedo={game.redoStack.length > 0}
+        boardOrientation={boardOrientation}
+        onFlipBoard={flipBoard}
       />
 
       {confirmDialog && (
@@ -368,8 +367,6 @@ export function GameScreen() {
           }}
         />
       )}
-
-      {orientationPromptCallback && <OrientationDialog onChoose={resolveOrientationPrompt} />}
 
       {game.editMode && (
         <EditBoardToolbar

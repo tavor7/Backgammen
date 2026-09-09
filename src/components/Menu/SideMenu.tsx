@@ -1,6 +1,7 @@
 import { useUiStore } from '../../state/uiStore';
 import { useT, useLanguageStore } from '../../i18n/useT';
 import { LANGUAGE_LABEL, type Language } from '../../i18n/translations';
+import type { BoardOrientation } from '../Board/Board';
 
 interface SideMenuProps {
   open: boolean;
@@ -11,9 +12,11 @@ interface SideMenuProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  boardOrientation: BoardOrientation;
+  onFlipBoard: () => void;
 }
 
-export function SideMenu({ open, onClose, onNewGame, onHome, onUndo, onRedo, canUndo, canRedo }: SideMenuProps) {
+export function SideMenu({ open, onClose, onNewGame, onHome, onUndo, onRedo, canUndo, canRedo, boardOrientation, onFlipBoard }: SideMenuProps) {
   const t = useT();
   const askConfirm = useUiStore((s) => s.askConfirm);
   const language = useLanguageStore((s) => s.language);
@@ -56,6 +59,16 @@ export function SideMenu({ open, onClose, onNewGame, onHome, onUndo, onRedo, can
           disabled={!canRedo}
         >
           {t('menu.redo')}
+        </button>
+        <button
+          type="button"
+          className="side-menu__item"
+          onClick={() => {
+            onClose();
+            onFlipBoard();
+          }}
+        >
+          {t('menu.flipBoard')} ({t(`orientation.${boardOrientation === 'bottomLeft' ? 'bottomRight' : 'bottomLeft'}`)})
         </button>
         <button
           type="button"

@@ -6,7 +6,6 @@ import type { Difficulty } from '../ai/difficulty';
 import { useT, useLanguageStore } from '../i18n/useT';
 import type { Language } from '../i18n/translations';
 import { LANGUAGE_LABEL } from '../i18n/translations';
-import { OrientationDialog } from '../components/OrientationDialog/OrientationDialog';
 
 export function HomeScreen() {
   const t = useT();
@@ -17,9 +16,6 @@ export function HomeScreen() {
   const goToGame = useUiStore((s) => s.goToGame);
   const difficulty = useUiStore((s) => s.difficulty);
   const setDifficulty = useUiStore((s) => s.setDifficulty);
-  const askOrientation = useUiStore((s) => s.askOrientation);
-  const resolveOrientationPrompt = useUiStore((s) => s.resolveOrientationPrompt);
-  const orientationPromptCallback = useUiStore((s) => s.orientationPromptCallback);
 
   const [continuable, setContinuable] = useState<{ mode: GameMode } | null>(null);
 
@@ -32,10 +28,8 @@ export function HomeScreen() {
   }, [loadLastActive]);
 
   function start(mode: GameMode) {
-    askOrientation(() => {
-      newGame(mode);
-      goToGame();
-    });
+    newGame(mode);
+    goToGame();
   }
 
   return (
@@ -93,8 +87,6 @@ export function HomeScreen() {
       </div>
 
       <p className="home-screen__credit">{t('home.credit')}</p>
-
-      {orientationPromptCallback && <OrientationDialog onChoose={resolveOrientationPrompt} />}
     </div>
   );
 }

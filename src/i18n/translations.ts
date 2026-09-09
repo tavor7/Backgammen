@@ -20,7 +20,6 @@ const DICTIONARIES: Record<Language, Record<string, Entry>> = {
     'home.credit': 'Built by Amit',
     'home.language': 'Language',
 
-    'orientation.question': 'Which corner do you want to bring your checkers home to?',
     'orientation.bottomLeft': 'Bottom-Left',
     'orientation.bottomRight': 'Bottom-Right',
 
@@ -51,6 +50,7 @@ const DICTIONARIES: Record<Language, Record<string, Entry>> = {
     'menu.home': 'Home',
     'menu.confirmNewGame': 'Discard the current game and start a new one?',
     'menu.confirmHome': 'Leave this game and return home?',
+    'menu.flipBoard': 'Flip Board',
     'confirm.cancel': 'Cancel',
 
     'advisor.label': 'Advisor',
@@ -135,7 +135,6 @@ const DICTIONARIES: Record<Language, Record<string, Entry>> = {
     'home.credit': 'נבנה על ידי עמית',
     'home.language': 'שפה',
 
-    'orientation.question': 'לאיזו פינה תרצה להביא את הכלים שלך הביתה?',
     'orientation.bottomLeft': 'שמאל למטה',
     'orientation.bottomRight': 'ימין למטה',
 
@@ -166,6 +165,7 @@ const DICTIONARIES: Record<Language, Record<string, Entry>> = {
     'menu.home': 'מסך הבית',
     'menu.confirmNewGame': 'לבטל את המשחק הנוכחי ולהתחיל משחק חדש?',
     'menu.confirmHome': 'לעזוב את המשחק ולחזור למסך הבית?',
+    'menu.flipBoard': 'הפוך לוח',
     'confirm.cancel': 'ביטול',
 
     'advisor.label': 'יועץ',

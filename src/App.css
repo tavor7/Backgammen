@@ -808,9 +808,10 @@
   position: relative;
 }
 
-/* Sits on the felt, like dice tossed onto a real board, instead of a separate strip below the
-   board. Each player's dice sit in their own half rather than sharing one grouped panel — white
-   on the left, black on the right. */
+/* Sits directly on the felt, like dice tossed onto a real board, instead of a separate strip
+   below the board or a panel that would cover the triangles underneath. Each player's dice sit
+   in their own half rather than sharing one grouped panel — white on the left, black on the
+   right. */
 .dice-row {
   position: absolute;
   top: 50%;
@@ -819,10 +820,6 @@
   justify-content: center;
   align-items: flex-start;
   z-index: 15;
-  background: rgba(20, 12, 8, 0.4);
-  backdrop-filter: blur(1.5px);
-  border-radius: 10px;
-  padding: 6px 10px;
   pointer-events: none;
 }
 
@@ -1435,41 +1432,6 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-}
-
-.orientation-dialog__options {
-  display: flex;
-  gap: 10px;
-}
-
-.orientation-dialog__option {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  background: #3a2c1d;
-  color: var(--cream);
-  border: 1px solid #55432c;
-  border-radius: 10px;
-  padding: 14px 8px;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-
-.orientation-dialog__option:hover {
-  background: #4a3927;
-  border-color: var(--gold);
-}
-
-.orientation-dialog__option:active {
-  transform: scale(0.96);
-}
-
-.orientation-dialog__arrow {
-  font-size: 1.6rem;
-  color: var(--gold);
 }
 
 .btn--danger {
