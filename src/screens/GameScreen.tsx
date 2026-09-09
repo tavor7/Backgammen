@@ -285,12 +285,12 @@ export function GameScreen() {
           orientation={boardOrientation}
         />
 
-        <div className="dice-row">
-          {(['white', 'black'] as const).map((p) => {
-            const isActive = p === game.currentPlayer;
-            if (!isActive && !lastRolls[p]) return null;
-            return (
-              <div key={p} className={`player-dice${isActive ? ' player-dice--active' : ''}`}>
+        {(['white', 'black'] as const).map((p) => {
+          const isActive = p === game.currentPlayer;
+          if (!isActive && !lastRolls[p]) return null;
+          return (
+            <div key={p} className={`dice-row dice-row--${p}`}>
+              <div className={`player-dice${isActive ? ' player-dice--active' : ''}`}>
                 <span className="player-dice__label">{t(`player.${p}`)}</span>
                 {isActive ? (
                   <Dice
@@ -306,9 +306,9 @@ export function GameScreen() {
                   </div>
                 )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
       {computerThinking && <div className="thinking-indicator">{t('gameScreen.computerThinking')}</div>}
       {interactive && pendingMoves.length > 0 && (

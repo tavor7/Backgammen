@@ -806,25 +806,30 @@
   position: relative;
 }
 
-/* Sits on the felt near the bar, like dice tossed onto a real board, instead of a separate strip
-   below the board. */
+/* Sits on the felt, like dice tossed onto a real board, instead of a separate strip below the
+   board. Each player's dice sit in their own half rather than sharing one grouped panel — white
+   on the left, black on the right. */
 .dice-row {
   position: absolute;
   top: 50%;
-  /* Offset into one half rather than straddling the hinge, like dice actually tossed onto one
-     side of a physical board. */
-  left: 68%;
   transform: translate(-50%, -50%);
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 14px;
   z-index: 15;
   background: rgba(20, 12, 8, 0.4);
   backdrop-filter: blur(1.5px);
   border-radius: 10px;
   padding: 6px 10px;
   pointer-events: none;
+}
+
+.dice-row--white {
+  left: 30%;
+}
+
+.dice-row--black {
+  left: 70%;
 }
 
 .dice-row > * {
