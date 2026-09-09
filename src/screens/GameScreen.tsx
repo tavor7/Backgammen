@@ -16,6 +16,7 @@ import { requestAdvice, requestComputerMove } from '../ai/advisorClient';
 import type { RankedCandidate } from '../ai/moveAdvisor';
 import { probabilityBlotIsHit } from '../ai/probabilities';
 import { buildGameReport, type PlayerReport } from '../ai/gameReport';
+import { rollFavorableDice } from '../ai/dice';
 import { hashBoard, opponent } from '../game/board';
 import { mustEnterFromBar as engineMustEnterFromBar } from '../game/rules';
 import type { BoardState, Player } from '../game/types';
@@ -146,7 +147,9 @@ export function GameScreen() {
       if (game!.turnPhase === 'awaitingRoll') {
         await delay(500);
         if (cancelled) return;
-        rollDice();
+        // Expert gets a slight, user-requested dice edge: best-of-two rolls, still genuinely
+        // random, just biased toward bigger/doublet rolls on average.
+        rollDice(difficulty === 'expert' ? rollFavorableDice() : undefined);
         return;
       }
       if (game!.turnPhase === 'awaitingMove' && game!.dice.rolled) {
