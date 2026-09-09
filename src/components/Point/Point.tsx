@@ -12,15 +12,16 @@ interface PointProps {
   editable?: boolean;
   /** How many of this point's checkers landed here on the last completed turn (marks that many, from the top). */
   lastMoveCount?: number;
-  /** Changes once per committed turn — used to force the last-moved checkers to remount so their drop-in animation replays. */
+  /** Changes once per committed turn — used to force the last-moved checkers (and hit flash) to remount so their animations replay. */
   animationTick?: number;
   hitProbability?: number | null;
+  wasHit?: boolean;
   onSelect: () => void;
 }
 
 const MAX_VISIBLE = 5;
 
-export function Point({ pointNumber, owner, count, orientation, shade, selected, highlighted, editable = false, lastMoveCount = 0, animationTick = 0, hitProbability = null, onSelect }: PointProps) {
+export function Point({ pointNumber, owner, count, orientation, shade, selected, highlighted, editable = false, lastMoveCount = 0, animationTick = 0, hitProbability = null, wasHit = false, onSelect }: PointProps) {
   const visible = Math.min(count, MAX_VISIBLE);
   const overflow = count - visible;
   const isBlot = count === 1 && owner !== null;
@@ -34,6 +35,7 @@ export function Point({ pointNumber, owner, count, orientation, shade, selected,
       aria-label={`Point ${pointNumber}${owner ? `, ${count} ${owner}` : ', empty'}`}
     >
       <div className="point__triangle" />
+      {wasHit && <div key={`hitflash-${animationTick}`} className="point__hit-flash" />}
       <div className={`point__checkers point__checkers--${orientation}`}>
         {Array.from({ length: visible }).map((_, i) => {
           const isMarked = i >= visible - markedCount;

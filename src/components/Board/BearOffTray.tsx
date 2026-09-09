@@ -8,6 +8,9 @@ interface BearOffTrayProps {
 }
 
 export function BearOffTray({ player, count, active, onSelect }: BearOffTrayProps) {
+  // Stay out of the way until it's either actually holding checkers or is a live bear-off target.
+  if (!active && count === 0) return null;
+
   return (
     <button
       type="button"
@@ -16,7 +19,7 @@ export function BearOffTray({ player, count, active, onSelect }: BearOffTrayProp
       disabled={!active}
       aria-label={`${player} borne off: ${count}`}
     >
-      <div className="bear-off-tray__count">{count}</div>
+      <div key={count} className="bear-off-tray__count">{count}</div>
       <div className="bear-off-tray__label">off</div>
     </button>
   );

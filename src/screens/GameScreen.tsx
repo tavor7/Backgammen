@@ -181,10 +181,12 @@ export function GameScreen() {
   // a set of points) so two checkers landing on the same point — e.g. "6/2 8/2" — both get marked,
   // not just one.
   const lastMoveCounts = new Map<number | 'off', number>();
+  const hitPoints = new Set<number>();
   if (pendingMoves.length === 0 && lastTurn) {
     for (const [i, m] of lastTurn.moves.entries()) {
       const isPassThrough = lastTurn.moves.slice(i + 1).some((later) => later.from === m.to);
       if (!isPassThrough) lastMoveCounts.set(m.to, (lastMoveCounts.get(m.to) ?? 0) + 1);
+      if (m.hit && typeof m.to === 'number') hitPoints.add(m.to);
     }
   }
 
@@ -211,6 +213,7 @@ export function GameScreen() {
         lastMoveCounts={previewCandidate ? new Map() : lastMoveCounts}
         hitProbabilities={hitProbabilities}
         animationTick={game.moveHistory.length}
+        hitPoints={previewCandidate ? new Set() : hitPoints}
       />
 
       <Dice key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`} rolled={game.dice.rolled} remaining={remainingDice} />

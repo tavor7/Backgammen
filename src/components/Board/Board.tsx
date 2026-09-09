@@ -27,6 +27,7 @@ interface BoardProps {
   lastMoveCounts?: Map<number | 'off', number>;
   hitProbabilities?: Map<number, number>;
   animationTick?: number;
+  hitPoints?: Set<number>;
 }
 
 function NumberStrip({ points }: { points: number[] }) {
@@ -57,6 +58,7 @@ export function Board({
   lastMoveCounts = new Map(),
   hitProbabilities,
   animationTick = 0,
+  hitPoints = new Set(),
 }: BoardProps) {
   const destinationSet = new Set(destinationPoints);
   const hasOffDestination = destinationSet.has('off');
@@ -79,6 +81,7 @@ export function Board({
         lastMoveCount={lastMoveCounts.get(pointNumber) ?? 0}
         animationTick={animationTick}
         hitProbability={hitProbabilities?.get(pointNumber) ?? null}
+        wasHit={hitPoints.has(pointNumber)}
         onSelect={() => {
           if (clickable) onPointClick(pointNumber);
         }}
