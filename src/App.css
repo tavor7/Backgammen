@@ -280,8 +280,11 @@
   z-index: 1;
 }
 
+/* Anchor to the outer (base) edge instead of using flex-direction: column-reverse — reverse flow
+   combined with negative margins renders inconsistent overlap gaps across browsers/engines. Since
+   checkers are visually identical, which DOM-order checker ends up at which end doesn't matter. */
 .point__checkers--up {
-  flex-direction: column-reverse;
+  justify-content: flex-end;
 }
 
 .point__checkers .checker:not(:first-child) {

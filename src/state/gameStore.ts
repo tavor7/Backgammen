@@ -245,8 +245,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   /**
    * Every landing spot reachable from `point` right now: each immediate single-die destination,
-   * plus — when the same checker can play both remaining dice in one hop — the combined
-   * both-dice destination, so a player can tap straight through to it without an intermediate tap.
+   * plus — when the same checker can keep playing consecutive remaining dice in one hop — every
+   * further combined-dice destination along that chain (up to all 4 dice on a double), so a player
+   * can tap straight through to any of them without an intermediate tap.
    */
   landingSpotsFrom: (point) => {
     const { game, pendingMoves } = get();
@@ -256,17 +257,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const seen = new Map<string, LandingSpot>();
     for (const seq of matchingPrefix) {
-      const idx = pendingMoves.length;
-      const first = seq[idx];
-      if (first.from !== point) continue;
+      const startIdx = pendingMoves.length;
+      if (seq[startIdx].from !== point) continue;
 
-      const oneHopKey = `${first.to}`;
-      if (!seen.has(oneHopKey)) seen.set(oneHopKey, { to: first.to, moves: [first] });
-
-      const second = seq[idx + 1];
-      if (second && second.from === first.to) {
-        const twoHopKey = `${second.to}`;
-        if (!seen.has(twoHopKey)) seen.set(twoHopKey, { to: second.to, moves: [first, second] });
+      const chain: CheckerMove[] = [];
+      for (let i = startIdx; i < seq.length; i++) {
+        const move = seq[i];
+        if (chain.length > 0 && move.from !== chain[chain.length - 1].to) break; // a different checker took over
+        chain.push(move);
+        const key = `${move.to}`;
+        if (!seen.has(key)) seen.set(key, { to: move.to, moves: [...chain] });
       }
     }
     return Array.from(seen.values());
