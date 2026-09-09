@@ -7,7 +7,7 @@ interface CheckerProps {
   wasLastMove?: boolean;
 }
 
-export function Checker({ player, size = 34, ghost = false, wasLastMove = false }: CheckerProps) {
+export function Checker({ player, size = 27, ghost = false, wasLastMove = false }: CheckerProps) {
   return (
     <div
       className={`checker checker--${player}${ghost ? ' checker--ghost' : ''}${wasLastMove ? ' checker--last-move' : ''}`}
