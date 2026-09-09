@@ -112,11 +112,11 @@ export function chooseComputerMove(board: BoardState, player: Player, dice: [num
   // is chosen with THEIR best case accounted for our follow-up too, rather than a purely greedy
   // static-eval pick, so the computer won't walk into a position that looks fine one ply out but
   // hands the opponent an easy follow-up.
-  const shortlist = twoPlyNet.slice(0, Math.min(6, twoPlyNet.length));
+  const shortlist = twoPlyNet.slice(0, Math.min(12, twoPlyNet.length));
   let best = shortlist[0].candidate;
   let bestNet = -Infinity;
   for (const { candidate } of shortlist) {
-    const net = candidate.score - expectedBestReplyScoreDeep(candidate.resultingBoard, opponent(player), 2);
+    const net = candidate.score - expectedBestReplyScoreDeep(candidate.resultingBoard, opponent(player), 3);
     if (net > bestNet) {
       bestNet = net;
       best = candidate;

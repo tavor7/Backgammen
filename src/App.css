@@ -348,6 +348,37 @@
   margin-top: 2px;
 }
 
+.win-banner__report {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.win-banner__report--loading {
+  text-align: center;
+  font-size: 0.8rem;
+  font-style: italic;
+  opacity: 0.75;
+  animation: thinkingDots 1.2s ease-in-out infinite;
+}
+
+.win-banner__report-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+}
+
+.win-banner__report-sentence {
+  flex: 1;
+  text-align: start;
+}
+
 .thinking-indicator {
   text-align: center;
   font-size: 0.85rem;

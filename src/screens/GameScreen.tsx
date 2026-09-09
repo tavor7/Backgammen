@@ -15,9 +15,10 @@ import { useUiStore } from '../state/uiStore';
 import { requestAdvice, requestComputerMove } from '../ai/advisorClient';
 import type { RankedCandidate } from '../ai/moveAdvisor';
 import { probabilityBlotIsHit } from '../ai/probabilities';
+import { buildGameReport, type PlayerReport } from '../ai/gameReport';
 import { hashBoard, opponent } from '../game/board';
 import { mustEnterFromBar as engineMustEnterFromBar } from '../game/rules';
-import type { BoardState } from '../game/types';
+import type { BoardState, Player } from '../game/types';
 import { useT, useLanguageStore } from '../i18n/useT';
 
 const HUMAN_PLAYER = 'white';
@@ -88,11 +89,31 @@ export function GameScreen() {
   const advisorConsultedRef = useRef(false);
   const tapMoveRef = useRef(false);
   const [lastRolls, setLastRolls] = useState<{ white: [number, number] | null; black: [number, number] | null }>({ white: null, black: null });
+  const [gameReport, setGameReport] = useState<Record<Player, PlayerReport> | null>(null);
+  const [gameReportLoading, setGameReportLoading] = useState(false);
 
   // Each player's dice stay visible after their turn ends, until they roll again.
   useEffect(() => {
     setLastRolls({ white: null, black: null });
+    setGameReport(null);
   }, [game?.id]);
+
+  // Grade the finished game once, retrospectively, from its full move history.
+  useEffect(() => {
+    if (!game || game.status !== 'won') return;
+    let cancelled = false;
+    setGameReportLoading(true);
+    buildGameReport(game, language).then((report) => {
+      if (!cancelled) {
+        setGameReport(report);
+        setGameReportLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.status, game?.id]);
 
   useEffect(() => {
     if (game?.dice.rolled) {
@@ -291,6 +312,17 @@ export function GameScreen() {
           <div className="win-banner__score">
             {t('gameScreen.matchScore', { white: matchScore.white, black: matchScore.black })}
           </div>
+          {gameReportLoading && <div className="win-banner__report win-banner__report--loading">{t('gameScreen.reportLoading')}</div>}
+          {gameReport && (
+            <div className="win-banner__report">
+              {(['white', 'black'] as Player[]).map((p) => (
+                <div key={p} className="win-banner__report-row">
+                  <span className={`move-history__player move-history__player--${p}`}>{t(`player.${p}`)}</span>
+                  <span className="win-banner__report-sentence">{gameReport[p].sentence}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <button type="button" className="btn btn--primary win-banner__playAgain" onClick={() => newGame(game.mode)}>
             {t('gameScreen.playAgain')}
           </button>
