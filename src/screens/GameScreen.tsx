@@ -205,9 +205,10 @@ export function GameScreen() {
         mustEnterFromBar={mustEnter}
         lastMovePoints={previewCandidate ? [] : lastMovePoints}
         hitProbabilities={hitProbabilities}
+        animationTick={game.moveHistory.length}
       />
 
-      <Dice rolled={game.dice.rolled} remaining={remainingDice} />
+      <Dice key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`} rolled={game.dice.rolled} remaining={remainingDice} />
       {computerThinking && <div className="thinking-indicator">Computer is thinking…</div>}
       {interactive && pendingMoves.length > 0 && (
         <button type="button" className="btn btn--wide" onClick={undoPendingMove}>

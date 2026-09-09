@@ -22,7 +22,7 @@ export function Controls({ mode, currentPlayer, canUndo, canRedo, canRoll, editM
   return (
     <div className="controls">
       <div className="controls__status">
-        <span className={`turn-indicator turn-indicator--${currentPlayer}`}>{currentPlayer === 'white' ? 'White' : 'Black'} to play</span>
+        <span key={currentPlayer} className={`turn-indicator turn-indicator--${currentPlayer}`}>{currentPlayer === 'white' ? 'White' : 'Black'} to play</span>
         <span className="mode-indicator">{mode === 'vsComputer' ? 'vs Computer' : 'Live Assistant'}</span>
       </div>
       <div className="controls__actions">

@@ -25,6 +25,7 @@ interface BoardProps {
   mustEnterFromBar: boolean;
   lastMovePoints?: (number | 'bar' | 'off')[];
   hitProbabilities?: Map<number, number>;
+  animationTick?: number;
 }
 
 function NumberStrip({ points }: { points: number[] }) {
@@ -54,6 +55,7 @@ export function Board({
   mustEnterFromBar,
   lastMovePoints = [],
   hitProbabilities,
+  animationTick = 0,
 }: BoardProps) {
   const destinationSet = new Set(destinationPoints);
   const hasOffDestination = destinationSet.has('off');
@@ -75,6 +77,7 @@ export function Board({
         highlighted={destinationSet.has(pointNumber)}
         editable={editMode}
         wasLastMove={lastMoveSet.has(pointNumber)}
+        animationTick={animationTick}
         hitProbability={hitProbabilities?.get(pointNumber) ?? null}
         onSelect={() => {
           if (clickable) onPointClick(pointNumber);
