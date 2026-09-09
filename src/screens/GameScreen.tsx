@@ -12,7 +12,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import { Toast } from '../components/Toast/Toast';
 import { useGameStore } from '../state/gameStore';
 import { useUiStore } from '../state/uiStore';
-import { requestAdvice, requestComputerMove } from '../ai/advisorClient';
+import { requestAdvice, requestComputerMove, warmUpAdvisor } from '../ai/advisorClient';
 import type { RankedCandidate } from '../ai/moveAdvisor';
 import { probabilityBlotIsHit } from '../ai/probabilities';
 import { buildGameReport, type PlayerReport } from '../ai/gameReport';
@@ -92,6 +92,12 @@ export function GameScreen() {
   const [lastRolls, setLastRolls] = useState<{ white: [number, number] | null; black: [number, number] | null }>({ white: null, black: null });
   const [gameReport, setGameReport] = useState<Record<Player, PlayerReport> | null>(null);
   const [gameReportLoading, setGameReportLoading] = useState(false);
+
+  // Spin up the advisor worker as early as possible, so its background bearoff-database build has
+  // the whole rest of this turn (at least) to finish before anything actually needs it.
+  useEffect(() => {
+    warmUpAdvisor();
+  }, []);
 
   // Each player's dice stay visible after their turn ends, until they roll again.
   useEffect(() => {
@@ -277,7 +283,7 @@ export function GameScreen() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     openAdvisor();
     setAdvisorLoading(true);
-    const result = await requestAdvice(game!.board, game!.currentPlayer, game!.dice.remaining, topN, language);
+    const result = await requestAdvice(game!.board, game!.currentPlayer, game!.dice.remaining, topN, language, true);
     setCandidates(result);
     setAdvisorLoading(false);
   }

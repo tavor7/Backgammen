@@ -3,6 +3,7 @@ import { opponent } from '../game/board';
 import type { MoveSequence, BoardState, Player } from '../game/types';
 import { evaluate } from './evaluator';
 import { ALL_ROLLS } from './probabilities';
+import { rolloutEquity } from './rollout';
 import type { Difficulty } from './difficulty';
 
 export function diceValuesFor(dice: [number, number]): number[] {
@@ -113,12 +114,23 @@ export function chooseComputerMove(board: BoardState, player: Player, dice: [num
   // static-eval pick, so the computer won't walk into a position that looks fine one ply out but
   // hands the opponent an easy follow-up.
   const shortlist = twoPlyNet.slice(0, Math.min(12, twoPlyNet.length));
-  let best = shortlist[0].candidate;
-  let bestNet = -Infinity;
-  for (const { candidate } of shortlist) {
-    const net = candidate.score - expectedBestReplyScoreDeep(candidate.resultingBoard, opponent(player), 3);
-    if (net > bestNet) {
-      bestNet = net;
+  const deepScored = shortlist.map(({ candidate }) => ({
+    candidate,
+    net: candidate.score - expectedBestReplyScoreDeep(candidate.resultingBoard, opponent(player), 3),
+  }));
+  deepScored.sort((a, b) => b.net - a.net);
+
+  // expert, stage 3: for the final few, replace the static-eval judgment with actual rollouts —
+  // play the resulting position out to completion (or a cutoff) several times with random dice,
+  // and pick whichever candidate wins on average. Far more accurate than any fixed-depth static
+  // search, at real computational cost, so it's reserved for a very short final list.
+  const rolloutShortlist = deepScored.slice(0, Math.min(4, deepScored.length));
+  let best = rolloutShortlist[0].candidate;
+  let bestEquity = -Infinity;
+  for (const { candidate } of rolloutShortlist) {
+    const equity = -rolloutEquity(candidate.resultingBoard, opponent(player), 6, 40);
+    if (equity > bestEquity) {
+      bestEquity = equity;
       best = candidate;
     }
   }

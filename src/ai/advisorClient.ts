@@ -29,9 +29,16 @@ function send(request: WorkerRequest): Promise<WorkerResponse> {
   });
 }
 
-export async function requestAdvice(board: BoardState, player: Player, dice: number[], topN: number, language: Language = 'en'): Promise<RankedCandidate[]> {
+/** Spins up the worker (if not already running) so its background work — currently, building the
+ * bearoff database — starts as early as possible, well before any real request is likely to need
+ * it. Safe to call more than once; a no-op after the first call. */
+export function warmUpAdvisor(): void {
+  getWorker();
+}
+
+export async function requestAdvice(board: BoardState, player: Player, dice: number[], topN: number, language: Language = 'en', useRollouts = false): Promise<RankedCandidate[]> {
   const id = nextId++;
-  const response = await send({ id, type: 'advise', board, player, dice, topN, language });
+  const response = await send({ id, type: 'advise', board, player, dice, topN, language, useRollouts });
   return response.type === 'advise' ? response.candidates : [];
 }
 

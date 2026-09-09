@@ -1,5 +1,13 @@
 import { extractFeatures, isRacingPosition, type FeatureSet } from './features';
+import { configFromBoard, getBearoffTable, raceWinProbability } from './bearoff';
+import { opponent } from '../game/board';
+import { canBearOff } from '../game/rules';
 import type { BoardState, Player } from '../game/types';
+
+/** Scaled to roughly the same order of magnitude as the heuristic weight tables' typical extremes,
+ * so a bearoff-phase score stays comparable in searches that mix it with other phases (e.g. the
+ * mover reaching bearoff while comparing against an opponent reply that doesn't). */
+const BEAROFF_SCORE_SCALE = 40;
 
 export type GamePhase = 'race' | 'contact' | 'bearoff';
 
@@ -80,6 +88,18 @@ export interface Evaluation {
 export function evaluate(board: BoardState, forPlayer: Player): Evaluation {
   const features = extractFeatures(board, forPlayer);
   const phase = classifyPhase(board, features);
+
+  // Once both sides are fully home with no contact possible, this is a pure bearoff race — exact
+  // win probability (from the one-sided bearoff database) replaces the heuristic weights entirely,
+  // rather than approximating something that's actually computable precisely.
+  if (phase === 'bearoff' && canBearOff(board, opponent(forPlayer))) {
+    const table = getBearoffTable();
+    const winProb = raceWinProbability(configFromBoard(board, forPlayer), configFromBoard(board, opponent(forPlayer)), table);
+    if (winProb !== null) {
+      return { score: winProb * BEAROFF_SCORE_SCALE, phase, features };
+    }
+  }
+
   const weights = WEIGHTS_BY_PHASE[phase];
 
   let score = 0;

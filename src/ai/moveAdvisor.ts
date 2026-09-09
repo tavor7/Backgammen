@@ -1,8 +1,10 @@
 import { applySequence, generateLegalSequences } from '../game/moveGenerator';
+import { opponent } from '../game/board';
 import type { BoardState, MoveSequence, Player } from '../game/types';
 import type { Language } from '../i18n/translations';
 import { evaluate } from './evaluator';
 import { explain } from './explanations';
+import { rolloutEquity } from './rollout';
 
 export type Rating = 'Excellent' | 'Strong' | 'Playable' | 'Risky';
 
@@ -29,8 +31,14 @@ function ratingFor(scoreGapFromBest: number, spread: number): Rating {
 /**
  * Ranks all legal move sequences for the given roll and returns the top `topN` candidates
  * with score, normalized rating, and a natural-language explanation of why each move is good.
+ *
+ * `useRollouts` swaps the ranking score from a single static-eval snapshot to the average outcome
+ * of actually playing each shortlisted candidate out to completion several times — much more
+ * accurate, at real computational cost, so it's reserved for the interactive Advisor panel (a
+ * user-initiated, latency-tolerant action). Callers that run per-turn or over a whole game's
+ * history (the best-move toast, the post-game report) leave it off to stay fast.
  */
-export function getTopCandidates(board: BoardState, player: Player, dice: number[], topN = 3, language: Language = 'en'): RankedCandidate[] {
+export function getTopCandidates(board: BoardState, player: Player, dice: number[], topN = 3, language: Language = 'en', useRollouts = false): RankedCandidate[] {
   const before = evaluate(board, player);
   const sequences = generateLegalSequences(board, player, dice).filter((s) => s.length > 0);
 
@@ -44,11 +52,26 @@ export function getTopCandidates(board: BoardState, player: Player, dice: number
 
   scored.sort((a, b) => b.score - a.score);
 
-  const bestScore = scored[0].score;
-  const worstScore = scored[scored.length - 1].score;
+  let ranked = scored;
+  if (useRollouts) {
+    const shortlistSize = Math.max(topN, Math.min(8, scored.length));
+    const shortlist = scored.slice(0, shortlistSize);
+    const rolloutScored = shortlist.map((candidate) => ({
+      ...candidate,
+      // Rollout equity is naturally a small -3..+3 range; scale up so it dominates the ranking
+      // (that's the point) while staying in a comparable order of magnitude to the static score
+      // for the rating-spread math below.
+      score: -rolloutEquity(candidate.resultingBoard, opponent(player), 5, 35) * 10,
+    }));
+    rolloutScored.sort((a, b) => b.score - a.score);
+    ranked = rolloutScored;
+  }
+
+  const bestScore = ranked[0].score;
+  const worstScore = ranked[ranked.length - 1].score;
   const spread = Math.max(bestScore - worstScore, 1e-6);
 
-  return scored.slice(0, topN).map((candidate, index) => {
+  return ranked.slice(0, topN).map((candidate, index) => {
     const { summary, pros, cons } = explain(board, candidate.resultingBoard, player, candidate.sequence, before.features, candidate.afterFeatures, language);
     return {
       rank: index + 1,
