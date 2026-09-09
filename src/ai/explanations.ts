@@ -166,7 +166,10 @@ function concreteFacts(boardBefore: BoardState, boardAfter: BoardState, player: 
     });
   }
 
-  return facts;
+  // Boosted so a concrete, point-numbered fact always outranks a same-signal aggregate summary
+  // (e.g. "hits your 8-point" leads ahead of a generic "improves your racing position") when both
+  // apply to the same move — the whole point of computing these is to make them the headline.
+  return facts.map((f) => ({ ...f, magnitude: f.magnitude * 3 }));
 }
 
 /**

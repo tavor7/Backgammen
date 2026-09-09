@@ -1110,9 +1110,11 @@
   width: 100%;
   max-width: 480px;
   /* dvh (not vh) accounts for mobile Safari's address bar so the sheet doesn't overshoot the
-     actually-visible viewport; vh is a fallback for browsers without dvh support. */
-  max-height: min(42vh, 380px);
-  max-height: min(42dvh, 380px);
+     actually-visible viewport; vh is a fallback for browsers without dvh support. Kept fairly
+     short so it doesn't cover the (now taller) board — GameScreen also scrolls the board into
+     view when this opens. */
+  max-height: min(34vh, 320px);
+  max-height: min(34dvh, 320px);
   overflow-y: auto;
   border-radius: 18px 18px 0 0;
   padding: 16px;

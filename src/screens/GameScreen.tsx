@@ -234,6 +234,9 @@ export function GameScreen() {
   async function handleOpenAdvisor() {
     if (!game!.dice.rolled) return;
     advisorConsultedRef.current = true;
+    // Scroll the board to the top of the viewport first, so the sheet's fixed bottom panel
+    // covers as little of it as possible instead of whatever happened to be in view already.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     openAdvisor();
     setAdvisorLoading(true);
     const result = await requestAdvice(game!.board, game!.currentPlayer, game!.dice.remaining, topN, language);
