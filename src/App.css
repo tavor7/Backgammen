@@ -1,8 +1,8 @@
 :root {
-  --wood-dark: #6b4423;
-  --wood-mid: #d9a56a;
-  --felt-light: #e8c896;
-  --felt-dark: #a85a2e;
+  --wood-dark: #8a5a30;
+  --wood-mid: #dfae78;
+  --felt-light: #e6c393;
+  --felt-dark: #b0602f;
   --gold: #d4af6a;
   --cream: #f4ead9;
   --ink: #1a1410;
@@ -349,12 +349,12 @@
   background:
     repeating-linear-gradient(93deg, rgba(255, 255, 255, 0.06) 0px, transparent 2px, transparent 5px, rgba(74, 46, 21, 0.05) 6px, transparent 8px),
     radial-gradient(ellipse at 30% 0%, rgba(255, 255, 255, 0.18), transparent 55%),
-    linear-gradient(160deg, #e2b57e, var(--wood-mid) 60%, #cf9a5f);
-  border-radius: 14px;
+    linear-gradient(160deg, #e7bc86, var(--wood-mid) 60%, #d6a56c);
+  border-radius: 22px;
   padding: 10px;
   border: 8px solid var(--wood-dark);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55), inset 0 0 22px 4px rgba(74, 46, 21, 0.35), inset 0 0 0 2px #4a2e15;
-  outline: 1px solid #8a5a30;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55), inset 0 0 22px 4px rgba(106, 70, 36, 0.3), inset 0 0 0 2px #6b4a28;
+  outline: 1px solid #a5763f;
   outline-offset: -10px;
   animation: boardEntrance 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
@@ -645,19 +645,19 @@
 }
 
 .board__off-corner--left {
-  left: 3px;
+  left: 7px;
 }
 
 .board__off-corner--right {
-  right: 3px;
+  right: 7px;
 }
 
 .board__off-corner--bottom {
-  bottom: 3px;
+  bottom: 7px;
 }
 
 .board__off-corner--top {
-  top: 3px;
+  top: 7px;
 }
 
 .bear-off-tray {
@@ -811,14 +811,16 @@
 .dice-row {
   position: absolute;
   top: 50%;
-  left: 50%;
+  /* Offset into one half rather than straddling the hinge, like dice actually tossed onto one
+     side of a physical board. */
+  left: 68%;
   transform: translate(-50%, -50%);
   display: flex;
   justify-content: center;
   align-items: flex-start;
   gap: 22px;
   z-index: 15;
-  background: rgba(20, 12, 8, 0.5);
+  background: rgba(20, 12, 8, 0.4);
   backdrop-filter: blur(1.5px);
   border-radius: 14px;
   padding: 8px 14px;
