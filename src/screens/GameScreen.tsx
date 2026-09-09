@@ -177,11 +177,16 @@ export function GameScreen() {
   const lastTurn = game.moveHistory[game.moveHistory.length - 1];
   // Only the final resting spot of each checker — a move whose destination is immediately reused
   // as another move's origin was just a pass-through (a single checker playing 2+ dice in a chain),
-  // not a place a checker actually ended up, so it shouldn't get its own highlight.
-  const lastMovePoints =
-    pendingMoves.length === 0 && lastTurn
-      ? lastTurn.moves.filter((m, i) => !lastTurn.moves.slice(i + 1).some((later) => later.from === m.to)).map((m) => m.to)
-      : [];
+  // not a place a checker actually ended up, so it shouldn't get its own highlight. Counted (not just
+  // a set of points) so two checkers landing on the same point — e.g. "6/2 8/2" — both get marked,
+  // not just one.
+  const lastMoveCounts = new Map<number | 'off', number>();
+  if (pendingMoves.length === 0 && lastTurn) {
+    for (const [i, m] of lastTurn.moves.entries()) {
+      const isPassThrough = lastTurn.moves.slice(i + 1).some((later) => later.from === m.to);
+      if (!isPassThrough) lastMoveCounts.set(m.to, (lastMoveCounts.get(m.to) ?? 0) + 1);
+    }
+  }
 
   return (
     <div className="game-screen">
@@ -203,7 +208,7 @@ export function GameScreen() {
         onBarClick={handleBarClick}
         onBearOffClick={handleBearOffClick}
         mustEnterFromBar={mustEnter}
-        lastMovePoints={previewCandidate ? [] : lastMovePoints}
+        lastMoveCounts={previewCandidate ? new Map() : lastMoveCounts}
         hitProbabilities={hitProbabilities}
         animationTick={game.moveHistory.length}
       />

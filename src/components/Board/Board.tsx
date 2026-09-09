@@ -23,7 +23,8 @@ interface BoardProps {
   onBarClick: () => void;
   onBearOffClick: (player: Player) => void;
   mustEnterFromBar: boolean;
-  lastMovePoints?: (number | 'bar' | 'off')[];
+  /** Point -> how many checkers landed there on the last completed turn. */
+  lastMoveCounts?: Map<number | 'off', number>;
   hitProbabilities?: Map<number, number>;
   animationTick?: number;
 }
@@ -53,13 +54,12 @@ export function Board({
   onBarClick,
   onBearOffClick,
   mustEnterFromBar,
-  lastMovePoints = [],
+  lastMoveCounts = new Map(),
   hitProbabilities,
   animationTick = 0,
 }: BoardProps) {
   const destinationSet = new Set(destinationPoints);
   const hasOffDestination = destinationSet.has('off');
-  const lastMoveSet = new Set(lastMovePoints);
 
   function renderPoint(pointNumber: number, orientation: 'up' | 'down') {
     const point = getPoint(board, pointNumber);
@@ -76,7 +76,7 @@ export function Board({
         selected={selected === pointNumber}
         highlighted={destinationSet.has(pointNumber)}
         editable={editMode}
-        wasLastMove={lastMoveSet.has(pointNumber)}
+        lastMoveCount={lastMoveCounts.get(pointNumber) ?? 0}
         animationTick={animationTick}
         hitProbability={hitProbabilities?.get(pointNumber) ?? null}
         onSelect={() => {
