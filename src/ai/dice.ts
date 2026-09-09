@@ -26,3 +26,15 @@ export function rollFavorableDice(board: BoardState, player: Player): [number, n
   const b = rollPair();
   return bestReachableScore(board, player, b) > bestReachableScore(board, player, a) ? b : a;
 }
+
+/**
+ * The mirror image: rolls twice and keeps whichever roll gives the *worse* reachable position for
+ * `player` — used for the human's own dice at Expert difficulty, at the user's explicit request,
+ * so the difficulty bump comes from both sides at once rather than only a stronger opponent. Same
+ * fairness caveat as above: each individual roll is a perfectly ordinary pair of dice.
+ */
+export function rollUnfavorableDice(board: BoardState, player: Player): [number, number] {
+  const a = rollPair();
+  const b = rollPair();
+  return bestReachableScore(board, player, b) < bestReachableScore(board, player, a) ? b : a;
+}

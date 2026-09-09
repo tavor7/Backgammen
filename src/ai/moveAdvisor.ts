@@ -54,14 +54,16 @@ export function getTopCandidates(board: BoardState, player: Player, dice: number
 
   let ranked = scored;
   if (useRollouts) {
-    const shortlistSize = Math.max(topN, Math.min(8, scored.length));
+    // Interactive (the user is looking at a loading spinner), so kept to a shorter shortlist than
+    // the computer's own move search to stay snappy.
+    const shortlistSize = Math.max(topN, Math.min(6, scored.length));
     const shortlist = scored.slice(0, shortlistSize);
     const rolloutScored = shortlist.map((candidate) => ({
       ...candidate,
       // Rollout equity is naturally a small -3..+3 range; scale up so it dominates the ranking
       // (that's the point) while staying in a comparable order of magnitude to the static score
       // for the rating-spread math below.
-      score: -rolloutEquity(candidate.resultingBoard, opponent(player), 5, 35) * 10,
+      score: -rolloutEquity(candidate.resultingBoard, opponent(player), 4, 20) * 10,
     }));
     rolloutScored.sort((a, b) => b.score - a.score);
     ranked = rolloutScored;

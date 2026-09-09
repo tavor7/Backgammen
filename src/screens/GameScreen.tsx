@@ -16,7 +16,7 @@ import { requestAdvice, requestComputerMove, warmUpAdvisor } from '../ai/advisor
 import type { RankedCandidate } from '../ai/moveAdvisor';
 import { probabilityBlotIsHit } from '../ai/probabilities';
 import { buildGameReport, type PlayerReport } from '../ai/gameReport';
-import { rollFavorableDice } from '../ai/dice';
+import { rollFavorableDice, rollUnfavorableDice } from '../ai/dice';
 import { hashBoard, opponent } from '../game/board';
 import { mustEnterFromBar as engineMustEnterFromBar } from '../game/rules';
 import type { BoardState, Player } from '../game/types';
@@ -231,6 +231,14 @@ export function GameScreen() {
   const mustEnter = engineMustEnterFromBar(board, game.currentPlayer);
   const canRollNow = game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER);
 
+  // At Expert, the difficulty bump comes from both sides — the computer's dice lean favorable
+  // (see the computer-turn effect above) and, symmetrically, the human's own dice lean
+  // unfavorable here. Only applies in vsComputer mode; Live Assistant has no "opponent" to bias
+  // against.
+  function handleHumanRoll() {
+    rollDice(game!.mode === 'vsComputer' && difficulty === 'expert' ? rollUnfavorableDice(game!.board, HUMAN_PLAYER) : undefined);
+  }
+
   function handlePointClick(point: number) {
     if (game!.editMode) {
       editTool.handlePointClick(point);
@@ -342,7 +350,7 @@ export function GameScreen() {
 
       <div
         className={`board-wrapper${canRollNow ? ' board-wrapper--tappable' : ''}`}
-        onClick={canRollNow ? () => rollDice() : undefined}
+        onClick={canRollNow ? handleHumanRoll : undefined}
       >
         <Board
           board={previewCandidate ? previewBoard : board}
@@ -373,7 +381,7 @@ export function GameScreen() {
                       rolled={game.dice.rolled}
                       remaining={remainingDice}
                       canRoll={canRollNow}
-                      onRoll={() => rollDice()}
+                      onRoll={handleHumanRoll}
                       player={p}
                     />
                   ) : (
