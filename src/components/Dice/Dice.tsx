@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 interface DiceProps {
   rolled: [number, number] | null;
   remaining: number[];
+  canRoll?: boolean;
+  onRoll?: () => void;
 }
 
 const PIPS: Record<number, [number, number][]> = {
@@ -67,8 +69,21 @@ function Die({ finalValue, used, startDelay }: { finalValue: number; used: boole
   );
 }
 
-export function Dice({ rolled, remaining }: DiceProps) {
-  if (!rolled) return <div className="dice dice--empty">Roll to begin</div>;
+export function Dice({ rolled, remaining, canRoll = false, onRoll }: DiceProps) {
+  if (!rolled) {
+    return (
+      <button
+        type="button"
+        className={`dice dice--empty${canRoll ? ' dice--tappable' : ''}`}
+        onClick={onRoll}
+        disabled={!canRoll}
+      >
+        <div className="dice__placeholder-die" />
+        <div className="dice__placeholder-die" />
+        <span className="dice__empty-label">{canRoll ? 'Tap to roll' : 'Roll to begin'}</span>
+      </button>
+    );
+  }
 
   const remainingCopy = remaining.slice();
   const dieValues = rolled[0] === rolled[1] ? [rolled[0], rolled[0], rolled[0], rolled[0]] : [rolled[0], rolled[1]];

@@ -35,6 +35,14 @@ interface UiStore {
   toast: string | null;
   showToast: (msg: string) => void;
   clearToast: () => void;
+
+  menuOpen: boolean;
+  openMenu: () => void;
+  closeMenu: () => void;
+
+  confirmDialog: { message: string; confirmLabel: string; onConfirm: () => void } | null;
+  askConfirm: (message: string, confirmLabel: string, onConfirm: () => void) => void;
+  dismissConfirm: () => void;
 }
 
 export const useUiStore = create<UiStore>((set) => ({
@@ -67,4 +75,12 @@ export const useUiStore = create<UiStore>((set) => ({
   toast: null,
   showToast: (msg) => set({ toast: msg }),
   clearToast: () => set({ toast: null }),
+
+  menuOpen: false,
+  openMenu: () => set({ menuOpen: true }),
+  closeMenu: () => set({ menuOpen: false }),
+
+  confirmDialog: null,
+  askConfirm: (message, confirmLabel, onConfirm) => set({ confirmDialog: { message, confirmLabel, onConfirm } }),
+  dismissConfirm: () => set({ confirmDialog: null }),
 }));

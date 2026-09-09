@@ -614,9 +614,42 @@
 }
 
 .dice--empty {
+  background: none;
+  border: none;
   color: #a3927a;
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  cursor: default;
+  padding: 0;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dice--tappable {
+  cursor: pointer;
+}
+
+.dice--tappable:active {
+  transform: scale(0.96);
+}
+
+.dice__placeholder-die {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 2px dashed #6b5a40;
+  background: rgba(212, 175, 106, 0.05);
+}
+
+.dice--tappable .dice__placeholder-die {
+  border-color: var(--gold);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.dice__empty-label {
+  width: 100%;
+  text-align: center;
+  margin-top: 2px;
 }
 
 .die {
@@ -743,6 +776,33 @@
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
+}
+
+.controls__status-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.controls__menu-btn {
+  background: #3a2c1d;
+  border: 1px solid #55432c;
+  color: var(--cream);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.controls__menu-btn:hover {
+  background: #4a3927;
+}
+
+.controls__menu-btn:active {
+  transform: scale(0.9);
 }
 
 .controls__actions {
@@ -1013,6 +1073,165 @@
   .point {
     height: 150px;
   }
+}
+
+/* ---------- Advisor FAB ---------- */
+
+.advisor-fab {
+  position: fixed;
+  right: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  z-index: 40;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.62rem;
+  gap: 1px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(212, 175, 106, 0.6);
+  cursor: pointer;
+  animation: fabPulse 2.6s ease-in-out infinite;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.advisor-fab__icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.advisor-fab:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.advisor-fab:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  animation: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes fabPulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(212, 175, 106, 0.5); }
+  50% { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 10px rgba(212, 175, 106, 0); }
+}
+
+/* ---------- Side menu ---------- */
+
+.side-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.side-menu {
+  width: min(78vw, 280px);
+  height: 100%;
+  background: var(--panel-bg);
+  border-left: 1px solid #46362299;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: sideMenuSlideIn 0.22s ease-out both;
+}
+
+@keyframes sideMenuSlideIn {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(0); }
+}
+
+.side-menu__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.side-menu__item {
+  background: #3a2c1d;
+  color: var(--cream);
+  border: 1px solid #55432c;
+  border-radius: 8px;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.side-menu__item:hover:not(:disabled) {
+  background: #4a3927;
+}
+
+.side-menu__item:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.side-menu__item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.side-menu__item--danger {
+  border-color: #6b3a34;
+}
+
+/* ---------- Confirm dialog ---------- */
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.confirm-dialog {
+  background: var(--panel-bg);
+  border: 1px solid #46362299;
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 340px;
+  width: 100%;
+  animation: cardFadeIn 0.2s ease both;
+}
+
+.confirm-dialog__message {
+  color: var(--cream);
+  margin: 0 0 18px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn--danger {
+  background: var(--risk);
+  color: var(--cream);
+  border-color: var(--risk);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #c9564a;
 }
 
 /* ---------- Reduced motion ---------- */

@@ -7,6 +7,8 @@ import { MoveHistory } from '../components/MoveHistory/MoveHistory';
 import { EditBoardToolbar } from '../components/EditBoardToolbar/EditBoardToolbar';
 import { useEditBoardTool } from '../components/EditBoardToolbar/useEditBoardTool';
 import { AnalysisPanel } from '../components/MoveAdvisor/AnalysisPanel';
+import { SideMenu } from '../components/Menu/SideMenu';
+import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
 import { useGameStore } from '../state/gameStore';
 import { useUiStore } from '../state/uiStore';
 import { requestAdvice, requestComputerMove } from '../ai/advisorClient';
@@ -62,6 +64,11 @@ export function GameScreen() {
   const setAdvisorLoading = useUiStore((s) => s.setAdvisorLoading);
   const setCandidates = useUiStore((s) => s.setCandidates);
   const setPreview = useUiStore((s) => s.setPreview);
+  const menuOpen = useUiStore((s) => s.menuOpen);
+  const openMenu = useUiStore((s) => s.openMenu);
+  const closeMenu = useUiStore((s) => s.closeMenu);
+  const confirmDialog = useUiStore((s) => s.confirmDialog);
+  const dismissConfirm = useUiStore((s) => s.dismissConfirm);
 
   const [selected, setSelected] = useState<number | 'bar' | null>(null);
   const editTool = useEditBoardTool(applyEdit);
@@ -216,7 +223,13 @@ export function GameScreen() {
         hitPoints={previewCandidate ? new Set() : hitPoints}
       />
 
-      <Dice key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`} rolled={game.dice.rolled} remaining={remainingDice} />
+      <Dice
+        key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`}
+        rolled={game.dice.rolled}
+        remaining={remainingDice}
+        canRoll={game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER)}
+        onRoll={() => rollDice()}
+      />
       {computerThinking && <div className="thinking-indicator">Computer is thinking…</div>}
       {interactive && pendingMoves.length > 0 && (
         <button type="button" className="btn btn--wide" onClick={undoPendingMove}>
@@ -236,20 +249,45 @@ export function GameScreen() {
       <Controls
         mode={game.mode}
         currentPlayer={game.currentPlayer}
-        canUndo={game.moveHistory.length > 0}
-        canRedo={game.redoStack.length > 0}
-        canRoll={game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER)}
         editMode={game.editMode}
-        onRoll={() => rollDice()}
+        onToggleEdit={() => setEditMode(!game.editMode)}
+        onSwitchTurn={switchTurn}
+        onOpenMenu={openMenu}
+      />
+
+      <button
+        type="button"
+        className="advisor-fab"
+        onClick={handleOpenAdvisor}
+        disabled={!game.dice.rolled || game.editMode || pendingMoves.length > 0}
+        aria-label="Advisor"
+      >
+        <span className="advisor-fab__icon">💡</span>
+        Advisor
+      </button>
+
+      <SideMenu
+        open={menuOpen}
+        onClose={closeMenu}
+        onNewGame={() => newGame(game.mode)}
+        onHome={goHome}
         onUndo={undo}
         onRedo={redo}
-        onNewGame={() => newGame(game.mode)}
-        onAdvisor={handleOpenAdvisor}
-        onToggleEdit={() => setEditMode(!game.editMode)}
-        onHome={goHome}
-        onSwitchTurn={switchTurn}
-        advisorDisabled={!game.dice.rolled || game.editMode || pendingMoves.length > 0}
+        canUndo={game.moveHistory.length > 0}
+        canRedo={game.redoStack.length > 0}
       />
+
+      {confirmDialog && (
+        <ConfirmDialog
+          message={confirmDialog.message}
+          confirmLabel={confirmDialog.confirmLabel}
+          onCancel={dismissConfirm}
+          onConfirm={() => {
+            confirmDialog.onConfirm();
+            dismissConfirm();
+          }}
+        />
+      )}
 
       {game.editMode && (
         <EditBoardToolbar
