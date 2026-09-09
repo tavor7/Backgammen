@@ -102,33 +102,45 @@ export function chooseComputerMove(board: BoardState, player: Player, dice: [num
     return best.sequence;
   }
 
+  // expert: a strict wall-clock budget so a single move never blows past what's tolerable to wait
+  // for, no matter how branchy the position (doubles, bar entries, etc. can multiply the candidate
+  // count a lot). Each stage checks the deadline and, if it's already gone, falls back to
+  // whatever the previous (cheaper) stage already decided instead of skipping the move entirely.
+  const deadline = Date.now() + 6500;
+
   // expert, stage 1: score EVERY legal sequence for this roll (not just a top few) against the
   // opponent's expected best reply across all 21 of their rolls — the top-N pre-filter used by
   // the other difficulties can throw away a move the static evaluator underrates before it ever
   // gets a real look, which is the main way "hard" misses things a strong player wouldn't.
   const twoPlyNet = scored.map((candidate) => ({ candidate, net: candidate.score - expectedBestReplyScore(candidate.resultingBoard, opponent(player)) }));
   twoPlyNet.sort((a, b) => b.net - a.net);
+  let fallback = twoPlyNet[0].candidate;
 
   // expert, stage 2: for just the resulting shortlist, go one ply deeper — the opponent's reply
   // is chosen with THEIR best case accounted for our follow-up too, rather than a purely greedy
   // static-eval pick, so the computer won't walk into a position that looks fine one ply out but
   // hands the opponent an easy follow-up.
-  const shortlist = twoPlyNet.slice(0, Math.min(12, twoPlyNet.length));
-  const deepScored = shortlist.map(({ candidate }) => ({
-    candidate,
-    net: candidate.score - expectedBestReplyScoreDeep(candidate.resultingBoard, opponent(player), 3),
-  }));
+  const shortlist = twoPlyNet.slice(0, Math.min(8, twoPlyNet.length));
+  const deepScored: { candidate: (typeof shortlist)[number]['candidate']; net: number }[] = [];
+  for (const { candidate } of shortlist) {
+    if (Date.now() > deadline) break;
+    deepScored.push({ candidate, net: candidate.score - expectedBestReplyScoreDeep(candidate.resultingBoard, opponent(player), 2) });
+  }
+  if (deepScored.length === 0) return fallback.sequence;
   deepScored.sort((a, b) => b.net - a.net);
+  fallback = deepScored[0].candidate;
 
   // expert, stage 3: for the final few, replace the static-eval judgment with actual rollouts —
   // play the resulting position out to completion (or a cutoff) several times with random dice,
   // and pick whichever candidate wins on average. Far more accurate than any fixed-depth static
-  // search, at real computational cost, so it's reserved for a very short final list.
-  const rolloutShortlist = deepScored.slice(0, Math.min(4, deepScored.length));
-  let best = rolloutShortlist[0].candidate;
+  // search, at real computational cost, so it's reserved for a very short final list bounded by
+  // whatever's left of the time budget.
+  const rolloutShortlist = deepScored.slice(0, Math.min(3, deepScored.length));
+  let best = fallback;
   let bestEquity = -Infinity;
   for (const { candidate } of rolloutShortlist) {
-    const equity = -rolloutEquity(candidate.resultingBoard, opponent(player), 6, 40);
+    if (Date.now() > deadline) break;
+    const equity = -rolloutEquity(candidate.resultingBoard, opponent(player), 6, 24);
     if (equity > bestEquity) {
       bestEquity = equity;
       best = candidate;
