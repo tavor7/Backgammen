@@ -49,7 +49,7 @@ export function getTopCandidates(board: BoardState, player: Player, dice: number
   const spread = Math.max(bestScore - worstScore, 1e-6);
 
   return scored.slice(0, topN).map((candidate, index) => {
-    const { summary, pros, cons } = explain(before.features, candidate.afterFeatures, language);
+    const { summary, pros, cons } = explain(board, candidate.resultingBoard, player, candidate.sequence, before.features, candidate.afterFeatures, language);
     return {
       rank: index + 1,
       sequence: candidate.sequence,

@@ -491,11 +491,11 @@
 .point__dot {
   position: absolute;
   bottom: 10px;
-  width: 20px;
-  height: 20px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #bdeaff, var(--move-dot));
-  box-shadow: 0 0 0 3px rgba(10, 8, 4, 0.7), 0 0 12px 4px rgba(41, 182, 246, 0.85);
+  box-shadow: 0 0 0 2px rgba(10, 8, 4, 0.6), 0 0 5px 1px rgba(41, 182, 246, 0.6);
   z-index: 8;
   animation: dotPulse 1.1s ease-in-out infinite;
 }
