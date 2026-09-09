@@ -25,14 +25,14 @@ export function Point({ pointNumber, owner, count, orientation, shade, selected,
   return (
     <button
       type="button"
-      className={`point point--${orientation} point--${shade}${selected ? ' point--selected' : ''}${highlighted ? ' point--highlighted' : ''}${editable ? ' point--editable' : ''}${wasLastMove ? ' point--last-move' : ''}`}
+      className={`point point--${orientation} point--${shade}${selected ? ' point--selected' : ''}${highlighted ? ' point--highlighted' : ''}${editable ? ' point--editable' : ''}`}
       onClick={onSelect}
       aria-label={`Point ${pointNumber}${owner ? `, ${count} ${owner}` : ', empty'}`}
     >
       <div className="point__triangle" />
       <div className={`point__checkers point__checkers--${orientation}`}>
         {Array.from({ length: visible }).map((_, i) => (
-          <Checker key={i} player={owner as Player} />
+          <Checker key={i} player={owner as Player} wasLastMove={wasLastMove && i === visible - 1} />
         ))}
         {overflow > 0 && <div className="point__overflow">+{overflow}</div>}
       </div>

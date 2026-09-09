@@ -79,8 +79,10 @@ export function GameScreen() {
 
   // Computer opponent: auto-roll then auto-move.
   useEffect(() => {
-    if (!game || game.mode !== 'vsComputer' || game.status !== 'inProgress') return;
-    if (game.currentPlayer !== COMPUTER_PLAYER) return;
+    if (!game || game.mode !== 'vsComputer' || game.status !== 'inProgress' || game.currentPlayer !== COMPUTER_PLAYER) {
+      setComputerThinking(false);
+      return;
+    }
 
     let cancelled = false;
     setComputerThinking(true);
