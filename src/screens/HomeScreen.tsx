@@ -16,6 +16,7 @@ export function HomeScreen() {
   const goToGame = useUiStore((s) => s.goToGame);
   const difficulty = useUiStore((s) => s.difficulty);
   const setDifficulty = useUiStore((s) => s.setDifficulty);
+  const resetMatchScore = useUiStore((s) => s.resetMatchScore);
 
   const [continuable, setContinuable] = useState<{ mode: GameMode } | null>(null);
 
@@ -28,6 +29,7 @@ export function HomeScreen() {
   }, [loadLastActive]);
 
   function start(mode: GameMode) {
+    resetMatchScore();
     newGame(mode);
     goToGame();
   }
@@ -61,7 +63,7 @@ export function HomeScreen() {
           <h2>{t('home.vsComputer.title')}</h2>
           <p>{t('home.vsComputer.desc')}</p>
           <div className="mode-card__difficulty">
-            {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
+            {(['easy', 'medium', 'hard', 'expert'] as Difficulty[]).map((d) => (
               <button
                 key={d}
                 type="button"

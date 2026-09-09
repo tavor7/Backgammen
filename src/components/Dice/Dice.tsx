@@ -93,7 +93,12 @@ export function Dice({ rolled, remaining, canRoll = false, onRoll, interactive =
       <button
         type="button"
         className={`dice dice--empty${canRoll ? ' dice--tappable' : ''}`}
-        onClick={onRoll}
+        onClick={(e) => {
+          // The whole board is also tap-to-roll now — stop this from bubbling up and firing a
+          // second roll on top of this one.
+          e.stopPropagation();
+          onRoll?.();
+        }}
         disabled={!canRoll}
       >
         <div className={`dice__placeholder-die${player ? ` dice__placeholder-die--${player}` : ''}`} />

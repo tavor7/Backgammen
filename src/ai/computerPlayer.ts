@@ -54,8 +54,12 @@ export function chooseComputerMove(board: BoardState, player: Player, dice: [num
     return pool[Math.floor(Math.random() * pool.length)].sequence;
   }
 
-  // hard: shallow 1-ply lookahead over the top few evaluator-ranked candidates
-  const topCandidates = scored.slice(0, Math.min(3, scored.length));
+  // hard/expert: shallow 1-ply lookahead (opponent's expected best reply across all 21 rolls)
+  // over the top evaluator-ranked candidates — expert widens the candidate pool it searches,
+  // so it's less likely to miss a tactically-better move that scored slightly lower on the
+  // static evaluator alone.
+  const poolSize = difficulty === 'expert' ? 6 : 3;
+  const topCandidates = scored.slice(0, Math.min(poolSize, scored.length));
   let best = topCandidates[0];
   let bestNet = -Infinity;
   for (const candidate of topCandidates) {

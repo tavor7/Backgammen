@@ -248,6 +248,7 @@
 
 .mode-card__difficulty {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 14px;
 }
@@ -327,10 +328,24 @@
   background: var(--gold);
   color: var(--ink);
   text-align: center;
-  padding: 12px;
+  padding: 14px 12px;
   border-radius: 10px;
   font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   animation: winPop 0.5s cubic-bezier(0.3, 1.4, 0.4, 1) both, winGlow 1.8s ease-in-out infinite 0.5s;
+}
+
+.win-banner__score {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.win-banner__playAgain {
+  margin-top: 2px;
 }
 
 .thinking-indicator {
@@ -821,6 +836,12 @@
   position: relative;
 }
 
+.board-wrapper--tappable,
+.board-wrapper--tappable .board,
+.board-wrapper--tappable .point {
+  cursor: pointer;
+}
+
 /* Sits directly on the felt, like dice tossed onto a real board, instead of a separate strip
    below the board or a panel that would cover the triangles underneath. Each player's dice sit
    in their own half rather than sharing one grouped panel — white on the left, black on the
@@ -944,6 +965,41 @@
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
+}
+
+.difficulty-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  animation: badgeBounceIn 0.3s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.difficulty-badge--easy {
+  background: rgba(77, 143, 91, 0.22);
+  color: #7fc98f;
+  border: 1px solid rgba(77, 143, 91, 0.5);
+}
+
+.difficulty-badge--medium {
+  background: rgba(201, 138, 58, 0.22);
+  color: var(--warn);
+  border: 1px solid rgba(201, 138, 58, 0.5);
+}
+
+.difficulty-badge--hard {
+  background: rgba(182, 73, 63, 0.22);
+  color: #e08579;
+  border: 1px solid rgba(182, 73, 63, 0.5);
+}
+
+.difficulty-badge--expert {
+  background: rgba(182, 73, 63, 0.3);
+  color: #ff9a8c;
+  border: 1px solid #ff9a8c;
+  box-shadow: 0 0 8px rgba(255, 122, 100, 0.45);
 }
 
 .controls__status-right {

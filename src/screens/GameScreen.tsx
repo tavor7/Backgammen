@@ -75,6 +75,9 @@ export function GameScreen() {
   const dismissConfirm = useUiStore((s) => s.dismissConfirm);
   const boardOrientation = useUiStore((s) => s.boardOrientation);
   const flipBoard = useUiStore((s) => s.flipBoard);
+  const matchScore = useUiStore((s) => s.matchScore);
+  const recordWin = useUiStore((s) => s.recordWin);
+  const resetMatchScore = useUiStore((s) => s.resetMatchScore);
   const toast = useUiStore((s) => s.toast);
   const showToast = useUiStore((s) => s.showToast);
   const clearToast = useUiStore((s) => s.clearToast);
@@ -153,6 +156,14 @@ export function GameScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game?.currentPlayer, game?.turnPhase, game?.dice.rolled, game?.mode, game?.status]);
 
+  // Tally the win into the running match score exactly once per finished game.
+  useEffect(() => {
+    if (game && game.status === 'won' && game.winner) {
+      recordWin(game.winner, game.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.status, game?.winner, game?.id]);
+
   // A fresh roll starts a new "did they open the advisor this turn" window.
   useEffect(() => {
     advisorConsultedRef.current = false;
@@ -186,6 +197,7 @@ export function GameScreen() {
   if (!game || !board) return null;
 
   const mustEnter = engineMustEnterFromBar(board, game.currentPlayer);
+  const canRollNow = game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER);
 
   function handlePointClick(point: number) {
     if (game!.editMode) {
@@ -272,12 +284,23 @@ export function GameScreen() {
     <div className="game-screen">
       {game.status === 'won' && game.winner && (
         <div className="win-banner">
-          <strong>{t('gameScreen.win', { player: t(`player.${game.winner}`) })}</strong>
-          {t(`gameScreen.winSuffix.${game.winType ?? 'single'}`)}
+          <div className="win-banner__message">
+            <strong>{t('gameScreen.win', { player: t(`player.${game.winner}`) })}</strong>
+            {t(`gameScreen.winSuffix.${game.winType ?? 'single'}`)}
+          </div>
+          <div className="win-banner__score">
+            {t('gameScreen.matchScore', { white: matchScore.white, black: matchScore.black })}
+          </div>
+          <button type="button" className="btn btn--primary win-banner__playAgain" onClick={() => newGame(game.mode)}>
+            {t('gameScreen.playAgain')}
+          </button>
         </div>
       )}
 
-      <div className="board-wrapper">
+      <div
+        className={`board-wrapper${canRollNow ? ' board-wrapper--tappable' : ''}`}
+        onClick={canRollNow ? () => rollDice() : undefined}
+      >
         <Board
           board={previewCandidate ? previewBoard : board}
           currentPlayer={game.currentPlayer}
@@ -307,7 +330,7 @@ export function GameScreen() {
                     key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`}
                     rolled={game.dice.rolled}
                     remaining={remainingDice}
-                    canRoll={game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER)}
+                    canRoll={canRollNow}
                     onRoll={() => rollDice()}
                     player={p}
                   />
@@ -344,6 +367,7 @@ export function GameScreen() {
         onToggleEdit={() => setEditMode(!game.editMode)}
         onSwitchTurn={switchTurn}
         onOpenMenu={openMenu}
+        difficulty={difficulty}
       />
 
       <button
@@ -360,7 +384,10 @@ export function GameScreen() {
       <SideMenu
         open={menuOpen}
         onClose={closeMenu}
-        onNewGame={() => newGame(game.mode)}
+        onNewGame={() => {
+          resetMatchScore();
+          newGame(game.mode);
+        }}
         onHome={goHome}
         onUndo={undo}
         onRedo={redo}

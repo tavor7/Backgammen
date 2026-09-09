@@ -1,12 +1,16 @@
 import { create } from 'zustand';
 import type { Difficulty } from '../ai/difficulty';
 import type { RankedCandidate } from '../ai/moveAdvisor';
-import type { CheckerMove } from '../game/types';
+import type { CheckerMove, Player } from '../game/types';
 import type { BoardOrientation } from '../components/Board/Board';
 
 export type Screen = 'home' | 'game';
 
 const ORIENTATION_KEY = 'backgammon:boardOrientation';
+
+/** Guards recordWin against double-counting the same game's win on a re-render (module-level,
+ * not store state, since it's bookkeeping rather than UI state). */
+let lastRecordedWinGameId: string | null = null;
 
 function loadInitialOrientation(): BoardOrientation {
   try {
@@ -60,6 +64,11 @@ interface UiStore {
   boardOrientation: BoardOrientation;
   setBoardOrientation: (o: BoardOrientation) => void;
   flipBoard: () => void;
+
+  /** Tally across consecutive games in the current match (not persisted — resets on a fresh start). */
+  matchScore: { white: number; black: number };
+  recordWin: (winner: Player, gameId: string) => void;
+  resetMatchScore: () => void;
 }
 
 export const useUiStore = create<UiStore>((set, get) => ({
@@ -111,4 +120,15 @@ export const useUiStore = create<UiStore>((set, get) => ({
     set({ boardOrientation: o });
   },
   flipBoard: () => get().setBoardOrientation(get().boardOrientation === 'bottomLeft' ? 'bottomRight' : 'bottomLeft'),
+
+  matchScore: { white: 0, black: 0 },
+  recordWin: (winner, gameId) => {
+    if (lastRecordedWinGameId === gameId) return;
+    lastRecordedWinGameId = gameId;
+    set((s) => ({ matchScore: { ...s.matchScore, [winner]: s.matchScore[winner] + 1 } }));
+  },
+  resetMatchScore: () => {
+    lastRecordedWinGameId = null;
+    set({ matchScore: { white: 0, black: 0 } });
+  },
 }));

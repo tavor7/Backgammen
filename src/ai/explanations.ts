@@ -5,6 +5,15 @@ import type { FeatureSet } from './features';
 
 type Described = { key: string; params?: Record<string, number | string> } | null;
 
+/**
+ * Picks one of N numbered phrasing variants ("explain.hit.one.v1", ".v2", ...) at random, so the
+ * same fact doesn't come out worded identically every time the advisor is opened — reads more
+ * like a person giving advice than a template being filled in.
+ */
+function variantKey(base: string, count: number): string {
+  return `${base}.v${1 + Math.floor(Math.random() * count)}`;
+}
+
 interface FeatureTemplate {
   key: keyof FeatureSet;
   /** Rough typical range for this feature, used to normalize magnitude of change across features. */
@@ -112,9 +121,9 @@ function concreteFacts(boardBefore: BoardState, boardAfter: BoardState, player: 
 
   const hitPoints = sequence.filter((m) => m.hit && typeof m.to === 'number').map((m) => m.to as number);
   if (hitPoints.length === 1) {
-    facts.push({ described: { key: 'explain.hit.one', params: { point: hitPoints[0] } }, magnitude: 1, category: 'offense', positive: true });
+    facts.push({ described: { key: variantKey('explain.hit.one', 3), params: { point: hitPoints[0] } }, magnitude: 1, category: 'offense', positive: true });
   } else if (hitPoints.length > 1) {
-    facts.push({ described: { key: 'explain.hit.many', params: { points: joinPoints(hitPoints) } }, magnitude: 1, category: 'offense', positive: true });
+    facts.push({ described: { key: variantKey('explain.hit.many', 2), params: { points: joinPoints(hitPoints) } }, magnitude: 1, category: 'offense', positive: true });
   }
 
   const madePoints: number[] = [];
@@ -122,9 +131,9 @@ function concreteFacts(boardBefore: BoardState, boardAfter: BoardState, player: 
     if (count >= 2 && (before.get(p) ?? 0) < 2) madePoints.push(p);
   }
   if (madePoints.length === 1) {
-    facts.push({ described: { key: 'explain.pointMade.one', params: { point: madePoints[0] } }, magnitude: 0.7, category: 'structure', positive: true });
+    facts.push({ described: { key: variantKey('explain.pointMade.one', 3), params: { point: madePoints[0] } }, magnitude: 0.7, category: 'structure', positive: true });
   } else if (madePoints.length > 1) {
-    facts.push({ described: { key: 'explain.pointMade.many', params: { points: joinPoints(madePoints) } }, magnitude: 0.7, category: 'structure', positive: true });
+    facts.push({ described: { key: variantKey('explain.pointMade.many', 2), params: { points: joinPoints(madePoints) } }, magnitude: 0.7, category: 'structure', positive: true });
   }
 
   const newBlots: number[] = [];
@@ -132,9 +141,9 @@ function concreteFacts(boardBefore: BoardState, boardAfter: BoardState, player: 
     if (count === 1 && (before.get(p) ?? 0) !== 1) newBlots.push(p);
   }
   if (newBlots.length === 1) {
-    facts.push({ described: { key: 'explain.blotNew.one', params: { point: newBlots[0] } }, magnitude: 0.6, category: 'defense', positive: false });
+    facts.push({ described: { key: variantKey('explain.blotNew.one', 3), params: { point: newBlots[0] } }, magnitude: 0.6, category: 'defense', positive: false });
   } else if (newBlots.length > 1) {
-    facts.push({ described: { key: 'explain.blotNew.many', params: { points: joinPoints(newBlots) } }, magnitude: 0.6, category: 'defense', positive: false });
+    facts.push({ described: { key: variantKey('explain.blotNew.many', 2), params: { points: joinPoints(newBlots) } }, magnitude: 0.6, category: 'defense', positive: false });
   }
 
   const covered: number[] = [];
@@ -142,16 +151,16 @@ function concreteFacts(boardBefore: BoardState, boardAfter: BoardState, player: 
     if (count === 1 && (after.get(p) ?? 0) >= 2) covered.push(p);
   }
   if (covered.length === 1) {
-    facts.push({ described: { key: 'explain.blotCovered.one', params: { point: covered[0] } }, magnitude: 0.6, category: 'defense', positive: true });
+    facts.push({ described: { key: variantKey('explain.blotCovered.one', 2), params: { point: covered[0] } }, magnitude: 0.6, category: 'defense', positive: true });
   } else if (covered.length > 1) {
-    facts.push({ described: { key: 'explain.blotCovered.many', params: { points: joinPoints(covered) } }, magnitude: 0.6, category: 'defense', positive: true });
+    facts.push({ described: { key: variantKey('explain.blotCovered.many', 2), params: { points: joinPoints(covered) } }, magnitude: 0.6, category: 'defense', positive: true });
   }
 
   const oppHome = homeBoardRange(opponent(player));
   for (let p = oppHome[0]; p <= oppHome[1]; p++) {
     const b = before.get(p) ?? 0;
     const a = after.get(p) ?? 0;
-    if (b < 2 && a >= 2) facts.push({ described: { key: 'explain.anchorPoint.secured', params: { point: p } }, magnitude: 0.5, category: 'defense', positive: true });
+    if (b < 2 && a >= 2) facts.push({ described: { key: variantKey('explain.anchorPoint.secured', 2), params: { point: p } }, magnitude: 0.5, category: 'defense', positive: true });
     if (b >= 2 && a < 2) facts.push({ described: { key: 'explain.anchorPoint.givenUp', params: { point: p } }, magnitude: 0.5, category: 'defense', positive: false });
   }
 
@@ -202,8 +211,22 @@ export function explain(boardBefore: BoardState, boardAfter: BoardState, player:
   const pros = changes.filter((c) => c.positive).map((c) => c.text);
   const cons = changes.filter((c) => !c.positive).map((c) => c.text);
 
-  const top = changes.slice(0, 3);
-  const summary = top.length > 0 ? capitalize(joinNaturally(top.map((c) => c.text), language)) + '.' : translate(language, 'explain.fallback');
+  // Frame the summary as a recommendation, not a flat pro/con list — a move with a downside can
+  // still be the right call, and reading "over-stacks a point, reducing flexibility" as the
+  // headline (with no "but this is still good because…" framing) reads like advice against
+  // playing it even when it's the top-ranked candidate.
+  const topPros = pros.slice(0, 2);
+  const topCons = cons.slice(0, 2);
+  let summary: string;
+  if (topPros.length > 0 && topCons.length > 0) {
+    summary = translate(language, variantKey('explain.summary.goodWithCaution', 3), { pros: joinNaturally(topPros, language), cons: joinNaturally(topCons, language) });
+  } else if (topPros.length > 0) {
+    summary = translate(language, variantKey('explain.summary.good', 3), { pros: joinNaturally(topPros, language) });
+  } else if (topCons.length > 0) {
+    summary = translate(language, variantKey('explain.summary.caution', 3), { cons: joinNaturally(topCons, language) });
+  } else {
+    summary = translate(language, variantKey('explain.fallback', 3));
+  }
 
   return { summary, pros: pros.slice(0, 3), cons: cons.slice(0, 3) };
 }
@@ -216,6 +239,3 @@ function joinNaturally(parts: string[], language: Language): string {
   return `${parts.slice(0, -1).join(', ')}, ${last}`;
 }
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}

@@ -1,4 +1,5 @@
 import type { GameMode, Player } from '../../game/types';
+import type { Difficulty } from '../../ai/difficulty';
 import { useT } from '../../i18n/useT';
 
 interface ControlsProps {
@@ -8,9 +9,10 @@ interface ControlsProps {
   onToggleEdit: () => void;
   onSwitchTurn: () => void;
   onOpenMenu: () => void;
+  difficulty?: Difficulty;
 }
 
-export function Controls({ mode, currentPlayer, editMode, onToggleEdit, onSwitchTurn, onOpenMenu }: ControlsProps) {
+export function Controls({ mode, currentPlayer, editMode, onToggleEdit, onSwitchTurn, onOpenMenu, difficulty }: ControlsProps) {
   const t = useT();
   return (
     <div className="controls">
@@ -20,6 +22,9 @@ export function Controls({ mode, currentPlayer, editMode, onToggleEdit, onSwitch
         </span>
         <div className="controls__status-right">
           <span className="mode-indicator">{mode === 'vsComputer' ? t('mode.vsComputer') : t('mode.liveAssistant')}</span>
+          {mode === 'vsComputer' && difficulty && (
+            <span className={`difficulty-badge difficulty-badge--${difficulty}`}>{t(`difficulty.${difficulty}`)}</span>
+          )}
           <button type="button" className="controls__menu-btn" onClick={onOpenMenu} aria-label={t('controls.menu')}>
             ☰
           </button>
