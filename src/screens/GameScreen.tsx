@@ -147,8 +147,10 @@ export function GameScreen() {
       if (game!.turnPhase === 'awaitingRoll') {
         await delay(500);
         if (cancelled) return;
-        // Expert gets a slight, user-requested dice edge: best-of-two rolls, still genuinely
-        // random, just biased toward bigger/doublet rolls on average.
+        // Expert gets a slight, user-requested dice edge: best-of-two rolls, evaluated against
+        // *this* turn's actual board (re-run fresh every time the computer is about to roll, not
+        // just on the opening roll), so it's biased toward whatever the current position actually
+        // needs rather than just bigger numbers or doubles in the abstract.
         rollDice(difficulty === 'expert' ? rollFavorableDice(game!.board, COMPUTER_PLAYER) : undefined);
         return;
       }
