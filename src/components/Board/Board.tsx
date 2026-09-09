@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Bar } from './Bar';
 import { BearOffTray } from './BearOffTray';
 import { Point } from '../Point/Point';
@@ -32,6 +33,11 @@ interface BoardProps {
   animationTick?: number;
   hitPoints?: Set<number>;
   orientation?: BoardOrientation;
+  /** Rendered inside the board's own DOM/stacking context (e.g. the dice) — the board's entrance
+   * animation makes it an isolated stacking context, so anything meant to sit "on" the board but
+   * still stay under important overlays like the move-destination dot has to live in here rather
+   * than as a sibling, or z-index between them becomes uncontrollable from outside. */
+  children?: ReactNode;
 }
 
 function NumberStrip({ points }: { points: number[] }) {
@@ -64,6 +70,7 @@ export function Board({
   animationTick = 0,
   hitPoints = new Set(),
   orientation = 'bottomLeft',
+  children,
 }: BoardProps) {
   const mirrored = orientation === 'bottomRight';
   const TOP_ROW = mirrored ? [...BASE_TOP_ROW].reverse() : BASE_TOP_ROW;
@@ -102,6 +109,7 @@ export function Board({
   return (
     <div className="board">
       <div className="board__hinge-line" />
+      {children}
       <NumberStrip points={TOP_ROW} />
       <div className="board__row board__row--top">
         {TOP_ROW.slice(0, 6).map((p) => renderPoint(p, 'down'))}

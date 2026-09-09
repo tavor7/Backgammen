@@ -884,7 +884,11 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  z-index: 15;
+  /* Below the move-destination dot (z-index 8) so a legal destination under the dice is never
+     hidden by them — the board's entrance animation gives .board its own stacking context, so
+     this is now a descendant of it (see Board.tsx's `children`) rather than a sibling, which is
+     what makes ordering against the dot controllable at all. */
+  z-index: 6;
   pointer-events: none;
 }
 

@@ -349,32 +349,32 @@ export function GameScreen() {
           animationTick={game.moveHistory.length * 100 + pendingMoves.length}
           hitPoints={previewCandidate ? new Set() : hitPoints}
           orientation={boardOrientation}
-        />
-
-        {(['white', 'black'] as const).map((p) => {
-          const isActive = p === game.currentPlayer;
-          if (!isActive && !lastRolls[p]) return null;
-          return (
-            <div key={p} className={`dice-row dice-row--${p}`}>
-              <div className={`player-dice${isActive ? ' player-dice--active' : ''}`}>
-                {isActive ? (
-                  <Dice
-                    key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`}
-                    rolled={game.dice.rolled}
-                    remaining={remainingDice}
-                    canRoll={canRollNow}
-                    onRoll={() => rollDice()}
-                    player={p}
-                  />
-                ) : (
-                  <div className="dice--static">
-                    <Dice rolled={lastRolls[p]} remaining={[]} interactive={false} player={p} />
-                  </div>
-                )}
+        >
+          {(['white', 'black'] as const).map((p) => {
+            const isActive = p === game.currentPlayer;
+            if (!isActive && !lastRolls[p]) return null;
+            return (
+              <div key={p} className={`dice-row dice-row--${p}`}>
+                <div className={`player-dice${isActive ? ' player-dice--active' : ''}`}>
+                  {isActive ? (
+                    <Dice
+                      key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`}
+                      rolled={game.dice.rolled}
+                      remaining={remainingDice}
+                      canRoll={canRollNow}
+                      onRoll={() => rollDice()}
+                      player={p}
+                    />
+                  ) : (
+                    <div className="dice--static">
+                      <Dice rolled={lastRolls[p]} remaining={[]} interactive={false} player={p} />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </Board>
       </div>
       {computerThinking && <div className="thinking-indicator">{t('gameScreen.computerThinking')}</div>}
       {interactive && pendingMoves.length > 0 && (
