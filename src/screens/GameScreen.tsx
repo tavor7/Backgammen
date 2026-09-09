@@ -130,9 +130,19 @@ export function GameScreen() {
         if (cancelled) return;
         const sequence = await requestComputerMove(game!.board, COMPUTER_PLAYER, game!.dice.rolled, difficulty);
         if (cancelled) return;
-        await delay(400);
-        if (cancelled) return;
-        playSequence(sequence);
+        if (sequence.length === 0) {
+          await delay(400);
+          if (cancelled) return;
+          playSequence(sequence);
+          return;
+        }
+        // Play one die at a time with a pause between, so a checker visibly hops from point to
+        // point on its way to its final resting spot instead of jumping straight there.
+        for (const move of sequence) {
+          await delay(420);
+          if (cancelled) return;
+          playMoves([move]);
+        }
       }
     }
     act().finally(() => !cancelled && setComputerThinking(false));
@@ -243,15 +253,16 @@ export function GameScreen() {
   // as another move's origin was just a pass-through (a single checker playing 2+ dice in a chain),
   // not a place a checker actually ended up, so it shouldn't get its own highlight. Counted (not just
   // a set of points) so two checkers landing on the same point — e.g. "6/2 8/2" — both get marked,
-  // not just one.
+  // not just one. While a turn is still in progress (pendingMoves non-empty — either a human
+  // tapping through their dice, or the computer hopping one die at a time), highlight against
+  // those moves so far instead of the last fully-committed turn.
+  const movesSoFar = pendingMoves.length > 0 ? pendingMoves : lastTurn ? lastTurn.moves : [];
   const lastMoveCounts = new Map<number | 'off', number>();
   const hitPoints = new Set<number>();
-  if (pendingMoves.length === 0 && lastTurn) {
-    for (const [i, m] of lastTurn.moves.entries()) {
-      const isPassThrough = lastTurn.moves.slice(i + 1).some((later) => later.from === m.to);
-      if (!isPassThrough) lastMoveCounts.set(m.to, (lastMoveCounts.get(m.to) ?? 0) + 1);
-      if (m.hit && typeof m.to === 'number') hitPoints.add(m.to);
-    }
+  for (const [i, m] of movesSoFar.entries()) {
+    const isPassThrough = movesSoFar.slice(i + 1).some((later) => later.from === m.to);
+    if (!isPassThrough) lastMoveCounts.set(m.to, (lastMoveCounts.get(m.to) ?? 0) + 1);
+    if (m.hit && typeof m.to === 'number') hitPoints.add(m.to);
   }
 
   return (
@@ -277,7 +288,7 @@ export function GameScreen() {
           mustEnterFromBar={mustEnter}
           lastMoveCounts={previewCandidate ? new Map() : lastMoveCounts}
           hitProbabilities={hitProbabilities}
-          animationTick={game.moveHistory.length}
+          animationTick={game.moveHistory.length * 100 + pendingMoves.length}
           hitPoints={previewCandidate ? new Set() : hitPoints}
           orientation={boardOrientation}
         />
