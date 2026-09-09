@@ -20,6 +20,10 @@ const DICTIONARIES: Record<Language, Record<string, Entry>> = {
     'home.credit': 'Built by Amit',
     'home.language': 'Language',
 
+    'orientation.question': 'Which corner do you want to bring your checkers home to?',
+    'orientation.bottomLeft': 'Bottom-Left',
+    'orientation.bottomRight': 'Bottom-Right',
+
     'mode.vsComputer': 'vs Computer',
     'mode.liveAssistant': 'Live Assistant',
 
@@ -94,6 +98,7 @@ const DICTIONARIES: Record<Language, Record<string, Entry>> = {
     'gameScreen.winSuffix.single': '!',
     'gameScreen.winSuffix.gammon': ' by a gammon!',
     'gameScreen.winSuffix.backgammon': ' by a backgammon!',
+    'gameScreen.bestMoveToast': '🎯 That was the best move!',
 
     'explain.blotCount.reduced': (p) => `reduces your exposed checkers from ${p.before} to ${p.after}`,
     'explain.blotCount.increased.one': (p) => `leaves ${p.after} checker exposed as a blot`,
@@ -129,6 +134,10 @@ const DICTIONARIES: Record<Language, Record<string, Entry>> = {
     'home.liveAssistant.btn': 'עוזר משחק חי',
     'home.credit': 'נבנה על ידי עמית',
     'home.language': 'שפה',
+
+    'orientation.question': 'לאיזו פינה תרצה להביא את הכלים שלך הביתה?',
+    'orientation.bottomLeft': 'שמאל למטה',
+    'orientation.bottomRight': 'ימין למטה',
 
     'mode.vsComputer': 'נגד מחשב',
     'mode.liveAssistant': 'עוזר חי',
@@ -204,6 +213,7 @@ const DICTIONARIES: Record<Language, Record<string, Entry>> = {
     'gameScreen.winSuffix.single': '!',
     'gameScreen.winSuffix.gammon': ' בגאמון!',
     'gameScreen.winSuffix.backgammon': ' בבקגאמון!',
+    'gameScreen.bestMoveToast': '🎯 זה היה המהלך הטוב ביותר!',
 
     'explain.blotCount.reduced': (p) => `מקטין את מספר הכלים החשופים שלך מ-${p.before} ל-${p.after}`,
     'explain.blotCount.increased.one': 'משאיר כלי אחד חשוף כ"בודד"',

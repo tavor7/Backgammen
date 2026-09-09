@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from '../components/Board/Board';
 import { Dice } from '../components/Dice/Dice';
 import { ManualDiceEntry } from '../components/Dice/ManualDiceEntry';
@@ -9,6 +9,8 @@ import { useEditBoardTool } from '../components/EditBoardToolbar/useEditBoardToo
 import { AnalysisPanel } from '../components/MoveAdvisor/AnalysisPanel';
 import { SideMenu } from '../components/Menu/SideMenu';
 import { ConfirmDialog } from '../components/ConfirmDialog/ConfirmDialog';
+import { Toast } from '../components/Toast/Toast';
+import { OrientationDialog } from '../components/OrientationDialog/OrientationDialog';
 import { useGameStore } from '../state/gameStore';
 import { useUiStore } from '../state/uiStore';
 import { requestAdvice, requestComputerMove } from '../ai/advisorClient';
@@ -72,10 +74,32 @@ export function GameScreen() {
   const closeMenu = useUiStore((s) => s.closeMenu);
   const confirmDialog = useUiStore((s) => s.confirmDialog);
   const dismissConfirm = useUiStore((s) => s.dismissConfirm);
+  const boardOrientation = useUiStore((s) => s.boardOrientation);
+  const askOrientation = useUiStore((s) => s.askOrientation);
+  const resolveOrientationPrompt = useUiStore((s) => s.resolveOrientationPrompt);
+  const orientationPromptCallback = useUiStore((s) => s.orientationPromptCallback);
+  const toast = useUiStore((s) => s.toast);
+  const showToast = useUiStore((s) => s.showToast);
+  const clearToast = useUiStore((s) => s.clearToast);
 
   const [selected, setSelected] = useState<number | 'bar' | null>(null);
   const editTool = useEditBoardTool(applyEdit);
   const [computerThinking, setComputerThinking] = useState(false);
+  const advisorConsultedRef = useRef(false);
+  const tapMoveRef = useRef(false);
+  const [lastRolls, setLastRolls] = useState<{ white: [number, number] | null; black: [number, number] | null }>({ white: null, black: null });
+
+  // Each player's dice stay visible after their turn ends, until they roll again.
+  useEffect(() => {
+    setLastRolls({ white: null, black: null });
+  }, [game?.id]);
+
+  useEffect(() => {
+    if (game?.dice.rolled) {
+      setLastRolls((prev) => ({ ...prev, [game.currentPlayer]: game.dice.rolled }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.dice.rolled?.join(','), game?.currentPlayer]);
 
   const board = game ? displayBoard() : null;
   const remainingDice = game ? remainingDiceFn() : [];
@@ -122,6 +146,36 @@ export function GameScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game?.currentPlayer, game?.turnPhase, game?.dice.rolled, game?.mode, game?.status]);
 
+  // A fresh roll starts a new "did they open the advisor this turn" window.
+  useEffect(() => {
+    advisorConsultedRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.dice.rolled?.join(',')]);
+
+  // If the player completed a turn by tapping through moves themselves (never opened the
+  // Advisor), check — after the fact — whether what they played was actually the top-ranked
+  // move, and let them know.
+  useEffect(() => {
+    if (!game || !tapMoveRef.current) return;
+    tapMoveRef.current = false;
+    if (advisorConsultedRef.current) return;
+
+    const lastTurnRecord = game.moveHistory[game.moveHistory.length - 1];
+    if (!lastTurnRecord || lastTurnRecord.type !== 'move' || !lastTurnRecord.dice) return;
+
+    let cancelled = false;
+    requestAdvice(lastTurnRecord.boardBefore, lastTurnRecord.player, lastTurnRecord.dice, 1, language).then((top) => {
+      if (cancelled || top.length === 0) return;
+      if (hashBoard(top[0].resultingBoard) === hashBoard(lastTurnRecord.boardAfter)) {
+        showToast(t('gameScreen.bestMoveToast'));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.moveHistory.length]);
+
   if (!game || !board) return null;
 
   const mustEnter = engineMustEnterFromBar(board, game.currentPlayer);
@@ -141,6 +195,7 @@ export function GameScreen() {
     if (selected !== null) {
       const spot = landingSpotsFrom(selected).find((s) => s.to === point);
       if (spot) {
+        tapMoveRef.current = true;
         playMoves(spot.moves);
         setSelected(null);
         return;
@@ -161,6 +216,7 @@ export function GameScreen() {
     if (!interactive || player !== game!.currentPlayer || selected === null) return;
     const spot = landingSpotsFrom(selected).find((s) => s.to === 'off');
     if (spot) {
+      tapMoveRef.current = true;
       playMoves(spot.moves);
       setSelected(null);
     }
@@ -170,6 +226,7 @@ export function GameScreen() {
 
   async function handleOpenAdvisor() {
     if (!game!.dice.rolled) return;
+    advisorConsultedRef.current = true;
     openAdvisor();
     setAdvisorLoading(true);
     const result = await requestAdvice(game!.board, game!.currentPlayer, game!.dice.remaining, topN, language);
@@ -224,15 +281,33 @@ export function GameScreen() {
         hitProbabilities={hitProbabilities}
         animationTick={game.moveHistory.length}
         hitPoints={previewCandidate ? new Set() : hitPoints}
+        orientation={boardOrientation}
       />
 
-      <Dice
-        key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`}
-        rolled={game.dice.rolled}
-        remaining={remainingDice}
-        canRoll={game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER)}
-        onRoll={() => rollDice()}
-      />
+      <div className="dice-row">
+        {(['white', 'black'] as const).map((p) => {
+          const isActive = p === game.currentPlayer;
+          if (!isActive && !lastRolls[p]) return null;
+          return (
+            <div key={p} className={`player-dice${isActive ? ' player-dice--active' : ''}`}>
+              <span className="player-dice__label">{t(`player.${p}`)}</span>
+              {isActive ? (
+                <Dice
+                  key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`}
+                  rolled={game.dice.rolled}
+                  remaining={remainingDice}
+                  canRoll={game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER)}
+                  onRoll={() => rollDice()}
+                />
+              ) : (
+                <div className="dice--static">
+                  <Dice rolled={lastRolls[p]} remaining={[]} interactive={false} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
       {computerThinking && <div className="thinking-indicator">{t('gameScreen.computerThinking')}</div>}
       {interactive && pendingMoves.length > 0 && (
         <button type="button" className="btn btn--wide" onClick={undoPendingMove}>
@@ -272,7 +347,7 @@ export function GameScreen() {
       <SideMenu
         open={menuOpen}
         onClose={closeMenu}
-        onNewGame={() => newGame(game.mode)}
+        onNewGame={() => askOrientation(() => newGame(game.mode))}
         onHome={goHome}
         onUndo={undo}
         onRedo={redo}
@@ -291,6 +366,8 @@ export function GameScreen() {
           }}
         />
       )}
+
+      {orientationPromptCallback && <OrientationDialog onChoose={resolveOrientationPrompt} />}
 
       {game.editMode && (
         <EditBoardToolbar
@@ -321,6 +398,8 @@ export function GameScreen() {
         onStopPreview={() => setPreview(null)}
         onPlay={handlePlayCandidate}
       />
+
+      {toast && <Toast message={toast} onDismiss={clearToast} />}
     </div>
   );
 }

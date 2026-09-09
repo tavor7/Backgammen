@@ -93,6 +93,12 @@
   100% { transform: scale(1); }
 }
 
+@keyframes toastPop {
+  0% { transform: translateX(-50%) translateY(10px) scale(0.9); opacity: 0; }
+  60% { transform: translateX(-50%) translateY(0) scale(1.03); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(0) scale(1); }
+}
+
 @keyframes winGlow {
   0%, 100% { box-shadow: 0 0 12px 2px rgba(212, 175, 106, 0.5); }
   50% { box-shadow: 0 0 26px 8px rgba(212, 175, 106, 0.85); }
@@ -342,7 +348,7 @@
   position: relative;
   background: linear-gradient(180deg, var(--wood-mid), var(--wood-dark));
   border-radius: 14px;
-  padding: 10px 10px 60px;
+  padding: 10px;
   border: 3px solid var(--wood-dark);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   animation: boardEntrance 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
@@ -575,20 +581,35 @@
   box-shadow: inset 0 0 0 2px var(--gold), inset 0 0 12px var(--gold);
 }
 
-.board__off-trays {
+/* Small badges pinned to the board's own corners — no reserved layout space; only rendered
+   (see BearOffTray.tsx) once a checker has actually been borne off or it's a live target. */
+.board__off-corner {
   position: absolute;
-  right: -4px;
-  bottom: 8px;
-  display: flex;
-  gap: 6px;
+  z-index: 6;
+}
+
+.board__off-corner--left {
+  left: 3px;
+}
+
+.board__off-corner--right {
+  right: 3px;
+}
+
+.board__off-corner--bottom {
+  bottom: 3px;
+}
+
+.board__off-corner--top {
+  top: 3px;
 }
 
 .bear-off-tray {
-  width: 46px;
-  height: 46px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid #55432c;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(20, 12, 8, 0.75);
+  border: 1px solid #6b5738;
   color: var(--cream);
   display: flex;
   flex-direction: column;
@@ -596,6 +617,7 @@
   justify-content: center;
   cursor: default;
   animation: trayAppear 0.3s cubic-bezier(0.3, 1.4, 0.4, 1) both;
+  line-height: 1;
 }
 
 .bear-off-tray--active {
@@ -605,13 +627,14 @@
 
 .bear-off-tray__count {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.8rem;
   animation: offCountBump 0.3s cubic-bezier(0.3, 1.4, 0.4, 1) both;
 }
 
 .bear-off-tray__label {
-  font-size: 0.6rem;
+  font-size: 0.4rem;
   opacity: 0.7;
+  text-transform: uppercase;
 }
 
 /* ---------- Dice ---------- */
@@ -688,8 +711,48 @@
 
 .dice .die:nth-child(1) { animation-delay: 0s; }
 .dice .die:nth-child(2) { animation-delay: 0.08s; }
-.dice .die:nth-child(3) { animation-delay: 0.16s; }
-.dice .die:nth-child(4) { animation-delay: 0.24s; }
+
+.dice__multiplier {
+  display: flex;
+  align-items: center;
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 1rem;
+  animation: badgeBounceIn 0.3s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  animation-delay: 0.55s;
+}
+
+.dice--static {
+  opacity: 0.55;
+  transform: scale(0.8);
+  transform-origin: center;
+}
+
+.player-dice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.player-dice__label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a3927a;
+}
+
+.player-dice--active .player-dice__label {
+  color: var(--gold);
+}
+
+.dice-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 28px;
+  min-height: 66px;
+}
 
 .die__grid {
   position: absolute;
@@ -1086,6 +1149,28 @@
   }
 }
 
+/* ---------- Toast ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 45;
+  background: var(--panel-bg);
+  border: 1px solid var(--gold);
+  color: var(--cream);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 14px rgba(212, 175, 106, 0.35);
+  cursor: pointer;
+  animation: toastPop 0.35s cubic-bezier(0.3, 1.4, 0.4, 1) both;
+  max-width: 88vw;
+  text-align: center;
+}
+
 /* ---------- Advisor FAB ---------- */
 
 .advisor-fab {
@@ -1266,6 +1351,41 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.orientation-dialog__options {
+  display: flex;
+  gap: 10px;
+}
+
+.orientation-dialog__option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #3a2c1d;
+  color: var(--cream);
+  border: 1px solid #55432c;
+  border-radius: 10px;
+  padding: 14px 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.orientation-dialog__option:hover {
+  background: #4a3927;
+  border-color: var(--gold);
+}
+
+.orientation-dialog__option:active {
+  transform: scale(0.96);
+}
+
+.orientation-dialog__arrow {
+  font-size: 1.6rem;
+  color: var(--gold);
 }
 
 .btn--danger {

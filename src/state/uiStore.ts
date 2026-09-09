@@ -2,8 +2,21 @@ import { create } from 'zustand';
 import type { Difficulty } from '../ai/difficulty';
 import type { RankedCandidate } from '../ai/moveAdvisor';
 import type { CheckerMove } from '../game/types';
+import type { BoardOrientation } from '../components/Board/Board';
 
 export type Screen = 'home' | 'game';
+
+const ORIENTATION_KEY = 'backgammon:boardOrientation';
+
+function loadInitialOrientation(): BoardOrientation {
+  try {
+    const stored = window.localStorage.getItem(ORIENTATION_KEY);
+    if (stored === 'bottomLeft' || stored === 'bottomRight') return stored;
+  } catch {
+    // ignore
+  }
+  return 'bottomLeft';
+}
 
 interface UiStore {
   screen: Screen;
@@ -43,9 +56,17 @@ interface UiStore {
   confirmDialog: { message: string; confirmLabel: string; onConfirm: () => void } | null;
   askConfirm: (message: string, confirmLabel: string, onConfirm: () => void) => void;
   dismissConfirm: () => void;
+
+  boardOrientation: BoardOrientation;
+  setBoardOrientation: (o: BoardOrientation) => void;
+  /** Pending "which corner do you want your checkers to end up in" prompt, resolved by OrientationDialog. */
+  orientationPromptCallback: (() => void) | null;
+  askOrientation: (onChosen: () => void) => void;
+  resolveOrientationPrompt: (o: BoardOrientation) => void;
+  dismissOrientationPrompt: () => void;
 }
 
-export const useUiStore = create<UiStore>((set) => ({
+export const useUiStore = create<UiStore>((set, get) => ({
   screen: 'home',
   goHome: () => set({ screen: 'home' }),
   goToGame: () => set({ screen: 'game' }),
@@ -83,4 +104,27 @@ export const useUiStore = create<UiStore>((set) => ({
   confirmDialog: null,
   askConfirm: (message, confirmLabel, onConfirm) => set({ confirmDialog: { message, confirmLabel, onConfirm } }),
   dismissConfirm: () => set({ confirmDialog: null }),
+
+  boardOrientation: loadInitialOrientation(),
+  setBoardOrientation: (o) => {
+    try {
+      window.localStorage.setItem(ORIENTATION_KEY, o);
+    } catch {
+      // ignore
+    }
+    set({ boardOrientation: o });
+  },
+  orientationPromptCallback: null,
+  askOrientation: (onChosen) => set({ orientationPromptCallback: onChosen }),
+  resolveOrientationPrompt: (o) => {
+    get().setBoardOrientation(o);
+    const cb = get().orientationPromptCallback;
+    set({ orientationPromptCallback: null });
+    cb?.();
+  },
+  dismissOrientationPrompt: () => {
+    const cb = get().orientationPromptCallback;
+    set({ orientationPromptCallback: null });
+    cb?.();
+  },
 }));

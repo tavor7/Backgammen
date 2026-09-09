@@ -6,6 +6,9 @@ interface DiceProps {
   remaining: number[];
   canRoll?: boolean;
   onRoll?: () => void;
+  /** When false, renders the roll statically with no tumble animation and no used/checkmark state —
+   * for showing a player's last roll after their turn has ended. */
+  interactive?: boolean;
 }
 
 const PIPS: Record<number, [number, number][]> = {
@@ -21,16 +24,25 @@ function randomFace(): number {
   return 1 + Math.floor(Math.random() * 6);
 }
 
+function DieFace({ value }: { value: number }) {
+  return (
+    <div className="die__grid">
+      {PIPS[value]?.map(([r, c], i) => <span key={i} className="die__pip" style={{ gridRow: r + 1, gridColumn: c + 1 }} />)}
+    </div>
+  );
+}
+
 /**
  * Mounts fresh on every new roll (the parent keys <Dice> by the roll), so "on mount" is exactly
  * "a new roll just happened" — tumbles through random faces at a slowing cadence before landing on
  * the real value, each die starting after a small stagger for a natural, non-synchronized feel.
  */
-function Die({ finalValue, used, startDelay }: { finalValue: number; used: boolean; startDelay: number }) {
+function Die({ finalValue, used, startDelay, animate }: { finalValue: number; used: boolean; startDelay: number; animate: boolean }) {
   const [displayValue, setDisplayValue] = useState(finalValue);
-  const [rolling, setRolling] = useState(true);
+  const [rolling, setRolling] = useState(animate);
 
   useEffect(() => {
+    if (!animate) return;
     let cancelled = false;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
     const tickCount = 7 + Math.floor(Math.random() * 3);
@@ -62,17 +74,17 @@ function Die({ finalValue, used, startDelay }: { finalValue: number; used: boole
 
   return (
     <div className={`die${used && !rolling ? ' die--used' : ''}${rolling ? ' die--rolling' : ''}`}>
-      <div className="die__grid">
-        {PIPS[displayValue]?.map(([r, c], i) => <span key={i} className="die__pip" style={{ gridRow: r + 1, gridColumn: c + 1 }} />)}
-      </div>
+      <DieFace value={displayValue} />
       {used && !rolling && <div className="die__check">✓</div>}
     </div>
   );
 }
 
-export function Dice({ rolled, remaining, canRoll = false, onRoll }: DiceProps) {
+export function Dice({ rolled, remaining, canRoll = false, onRoll, interactive = true }: DiceProps) {
   const t = useT();
+
   if (!rolled) {
+    if (!interactive) return null;
     return (
       <button
         type="button"
@@ -87,16 +99,30 @@ export function Dice({ rolled, remaining, canRoll = false, onRoll }: DiceProps) 
     );
   }
 
-  const remainingCopy = remaining.slice();
-  const dieValues = rolled[0] === rolled[1] ? [rolled[0], rolled[0], rolled[0], rolled[0]] : [rolled[0], rolled[1]];
+  const isDouble = rolled[0] === rolled[1];
 
+  if (isDouble) {
+    // Always exactly 2 die faces, even for a double — a small multiplier badge conveys the extra uses
+    // instead of rendering 4 separate dice.
+    const usesLeft = interactive ? remaining.length : 0;
+    const allUsed = interactive && usesLeft === 0;
+    return (
+      <div className="dice">
+        <Die finalValue={rolled[0]} used={allUsed} startDelay={0} animate={interactive} />
+        <Die finalValue={rolled[0]} used={allUsed} startDelay={90} animate={interactive} />
+        {interactive && usesLeft > 0 && <div className="dice__multiplier">×{usesLeft}</div>}
+      </div>
+    );
+  }
+
+  const remainingCopy = remaining.slice();
   return (
     <div className="dice">
-      {dieValues.map((value, i) => {
+      {rolled.map((value, i) => {
         const idx = remainingCopy.indexOf(value);
-        const used = idx === -1;
+        const used = interactive && idx === -1;
         if (idx >= 0) remainingCopy.splice(idx, 1);
-        return <Die key={i} finalValue={value} used={used} startDelay={i * 90} />;
+        return <Die key={i} finalValue={value} used={used} startDelay={i * 90} animate={interactive} />;
       })}
     </div>
   );
