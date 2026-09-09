@@ -26,6 +26,11 @@ function sameMove(a: CheckerMove, b: CheckerMove): boolean {
   return a.from === b.from && a.to === b.to && a.die === b.die;
 }
 
+export interface LandingSpot {
+  to: number | 'off';
+  moves: CheckerMove[];
+}
+
 interface GameStore {
   game: GameState | null;
   /** Moves played so far this turn via tap-to-move, not yet committed to a TurnRecord. */
@@ -39,7 +44,11 @@ interface GameStore {
   displayBoard: () => BoardState;
   remainingDice: () => number[];
   playSingleMove: (move: CheckerMove) => void;
+  /** Plays 2+ moves for the same checker at once (a tapped combined-dice landing spot). */
+  playMoves: (moves: CheckerMove[]) => void;
   playSequence: (sequence: MoveSequence) => void;
+  /** Reverts the most recent not-yet-committed move this turn (before the turn finalizes). */
+  undoPendingMove: () => void;
 
   undo: () => void;
   redo: () => void;
@@ -50,6 +59,8 @@ interface GameStore {
   applyEdit: (edit: BoardEdit) => void;
 
   legalDestinationsFrom: (point: number | 'bar') => CheckerMove[];
+  /** Every way to land the checker at `point` right now, including combined-both-dice landings. */
+  landingSpotsFrom: (point: number | 'bar') => LandingSpot[];
   currentWarnings: () => { message: string }[];
   /** If exactly one full legal sequence exists for this roll (from the current committed board), return it. */
   onlyLegalSequence: () => MoveSequence | null;
@@ -115,10 +126,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   playSingleMove: (move) => {
-    const { game, pendingMoves } = get();
-    if (!game || !game.dice.rolled) return;
+    get().playMoves([move]);
+  },
 
-    const candidateSequence = [...pendingMoves, move];
+  playMoves: (moves) => {
+    const { game, pendingMoves } = get();
+    if (!game || !game.dice.rolled || moves.length === 0) return;
+
+    const candidateSequence = [...pendingMoves, ...moves];
     const legalFull = legalSequencesForStateAllOrders(game).filter((seq) => seq.length >= candidateSequence.length);
     const isValidPrefix = legalFull.some((seq) => seq.slice(0, candidateSequence.length).every((m, i) => sameMove(m, candidateSequence[i])));
     if (!isValidPrefix) return;
@@ -140,6 +155,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else {
       set({ pendingMoves: candidateSequence });
     }
+  },
+
+  undoPendingMove: () => {
+    const { pendingMoves } = get();
+    if (pendingMoves.length === 0) return;
+    set({ pendingMoves: pendingMoves.slice(0, -1) });
   },
 
   playSequence: (sequence) => {
@@ -220,6 +241,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     }
     return moves;
+  },
+
+  /**
+   * Every landing spot reachable from `point` right now: each immediate single-die destination,
+   * plus — when the same checker can play both remaining dice in one hop — the combined
+   * both-dice destination, so a player can tap straight through to it without an intermediate tap.
+   */
+  landingSpotsFrom: (point) => {
+    const { game, pendingMoves } = get();
+    if (!game || !game.dice.rolled) return [];
+    const sequences = generateLegalSequencesAllOrders(game.board, game.currentPlayer, game.dice.remaining);
+    const matchingPrefix = sequences.filter((seq) => seq.length > pendingMoves.length && pendingMoves.every((m, i) => sameMove(m, seq[i])));
+
+    const seen = new Map<string, LandingSpot>();
+    for (const seq of matchingPrefix) {
+      const idx = pendingMoves.length;
+      const first = seq[idx];
+      if (first.from !== point) continue;
+
+      const oneHopKey = `${first.to}`;
+      if (!seen.has(oneHopKey)) seen.set(oneHopKey, { to: first.to, moves: [first] });
+
+      const second = seq[idx + 1];
+      if (second && second.from === first.to) {
+        const twoHopKey = `${second.to}`;
+        if (!seen.has(twoHopKey)) seen.set(twoHopKey, { to: second.to, moves: [first, second] });
+      }
+    }
+    return Array.from(seen.values());
   },
 
   currentWarnings: () => {

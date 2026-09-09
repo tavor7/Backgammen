@@ -10,19 +10,22 @@ interface PointProps {
   selected: boolean;
   highlighted: boolean;
   editable?: boolean;
+  wasLastMove?: boolean;
+  hitProbability?: number | null;
   onSelect: () => void;
 }
 
 const MAX_VISIBLE = 5;
 
-export function Point({ pointNumber, owner, count, orientation, shade, selected, highlighted, editable = false, onSelect }: PointProps) {
+export function Point({ pointNumber, owner, count, orientation, shade, selected, highlighted, editable = false, wasLastMove = false, hitProbability = null, onSelect }: PointProps) {
   const visible = Math.min(count, MAX_VISIBLE);
   const overflow = count - visible;
+  const isBlot = count === 1 && owner !== null;
 
   return (
     <button
       type="button"
-      className={`point point--${orientation} point--${shade}${selected ? ' point--selected' : ''}${highlighted ? ' point--highlighted' : ''}${editable ? ' point--editable' : ''}`}
+      className={`point point--${orientation} point--${shade}${selected ? ' point--selected' : ''}${highlighted ? ' point--highlighted' : ''}${editable ? ' point--editable' : ''}${wasLastMove ? ' point--last-move' : ''}`}
       onClick={onSelect}
       aria-label={`Point ${pointNumber}${owner ? `, ${count} ${owner}` : ', empty'}`}
     >
@@ -33,8 +36,12 @@ export function Point({ pointNumber, owner, count, orientation, shade, selected,
         ))}
         {overflow > 0 && <div className="point__overflow">+{overflow}</div>}
       </div>
+      {isBlot && hitProbability !== null && hitProbability > 0 && (
+        <div className={`point__hit-chance point__hit-chance--${owner}`} title="Chance this checker is hit next roll">
+          {Math.round(hitProbability * 100)}%
+        </div>
+      )}
       {highlighted && <div className="point__dot" />}
-      <span className="point__number">{pointNumber}</span>
     </button>
   );
 }

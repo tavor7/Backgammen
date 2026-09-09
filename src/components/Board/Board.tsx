@@ -2,7 +2,7 @@ import { Bar } from './Bar';
 import { BearOffTray } from './BearOffTray';
 import { Point } from '../Point/Point';
 import { getPoint } from '../../game/board';
-import type { BoardState, CheckerMove, Player } from '../../game/types';
+import type { BoardState, Player } from '../../game/types';
 
 const TOP_ROW = [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
 const BOTTOM_ROW = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
@@ -13,21 +13,52 @@ interface BoardProps {
   interactive: boolean;
   editMode?: boolean;
   selected: number | 'bar' | null;
-  legalDestinations: CheckerMove[];
+  /** Points reachable from the current selection, including multi-die combined landing spots. */
+  destinationPoints: (number | 'off')[];
   onPointClick: (point: number) => void;
   onBarClick: () => void;
   onBearOffClick: (player: Player) => void;
   mustEnterFromBar: boolean;
+  lastMovePoints?: (number | 'bar' | 'off')[];
+  hitProbabilities?: Map<number, number>;
 }
 
-export function Board({ board, currentPlayer, interactive, editMode = false, selected, legalDestinations, onPointClick, onBarClick, onBearOffClick, mustEnterFromBar }: BoardProps) {
-  const destinationPoints = new Set(legalDestinations.map((m) => m.to));
-  const hasOffDestination = legalDestinations.some((m) => m.to === 'off');
+function NumberStrip({ points }: { points: number[] }) {
+  return (
+    <div className="board__numbers">
+      {points.slice(0, 6).map((p) => (
+        <span key={p} className="board__number">{p}</span>
+      ))}
+      <span className="board__number board__number--bar" />
+      {points.slice(6).map((p) => (
+        <span key={p} className="board__number">{p}</span>
+      ))}
+    </div>
+  );
+}
+
+export function Board({
+  board,
+  currentPlayer,
+  interactive,
+  editMode = false,
+  selected,
+  destinationPoints,
+  onPointClick,
+  onBarClick,
+  onBearOffClick,
+  mustEnterFromBar,
+  lastMovePoints = [],
+  hitProbabilities,
+}: BoardProps) {
+  const destinationSet = new Set(destinationPoints);
+  const hasOffDestination = destinationSet.has('off');
+  const lastMoveSet = new Set(lastMovePoints);
 
   function renderPoint(pointNumber: number, orientation: 'up' | 'down') {
     const point = getPoint(board, pointNumber);
     const shade = pointNumber % 2 === 0 ? 'light' : 'dark';
-    const clickable = editMode || (interactive && (point.owner === currentPlayer || destinationPoints.has(pointNumber)));
+    const clickable = editMode || (interactive && (point.owner === currentPlayer || destinationSet.has(pointNumber)));
     return (
       <Point
         key={pointNumber}
@@ -37,8 +68,10 @@ export function Board({ board, currentPlayer, interactive, editMode = false, sel
         orientation={orientation}
         shade={shade}
         selected={selected === pointNumber}
-        highlighted={destinationPoints.has(pointNumber)}
+        highlighted={destinationSet.has(pointNumber)}
         editable={editMode}
+        wasLastMove={lastMoveSet.has(pointNumber)}
+        hitProbability={hitProbabilities?.get(pointNumber) ?? null}
         onSelect={() => {
           if (clickable) onPointClick(pointNumber);
         }}
@@ -48,6 +81,7 @@ export function Board({ board, currentPlayer, interactive, editMode = false, sel
 
   return (
     <div className="board">
+      <NumberStrip points={TOP_ROW} />
       <div className="board__row board__row--top">
         {TOP_ROW.slice(0, 6).map((p) => renderPoint(p, 'down'))}
         <div className="board__bar-slot">
@@ -66,6 +100,7 @@ export function Board({ board, currentPlayer, interactive, editMode = false, sel
         <div className="board__bar-slot" />
         {BOTTOM_ROW.slice(6).map((p) => renderPoint(p, 'up'))}
       </div>
+      <NumberStrip points={BOTTOM_ROW} />
       <div className="board__off-trays">
         <BearOffTray
           player="white"

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Board } from '../components/Board/Board';
 import { Dice } from '../components/Dice/Dice';
 import { ManualDiceEntry } from '../components/Dice/ManualDiceEntry';
@@ -11,10 +11,24 @@ import { useGameStore } from '../state/gameStore';
 import { useUiStore } from '../state/uiStore';
 import { requestAdvice, requestComputerMove } from '../ai/advisorClient';
 import type { RankedCandidate } from '../ai/moveAdvisor';
+import { probabilityBlotIsHit } from '../ai/probabilities';
+import { hashBoard, opponent } from '../game/board';
 import { mustEnterFromBar as engineMustEnterFromBar } from '../game/rules';
+import type { BoardState } from '../game/types';
 
 const HUMAN_PLAYER = 'white';
 const COMPUTER_PLAYER = 'black';
+
+function computeBlotHitProbabilities(board: BoardState): Map<number, number> {
+  const map = new Map<number, number>();
+  for (let p = 1; p <= 24; p++) {
+    const point = board.points[p - 1];
+    if (point.owner && point.count === 1) {
+      map.set(p, probabilityBlotIsHit(board, p, opponent(point.owner)));
+    }
+  }
+  return map;
+}
 
 export function GameScreen() {
   const game = useGameStore((s) => s.game);
@@ -22,15 +36,16 @@ export function GameScreen() {
   const rollDice = useGameStore((s) => s.rollDice);
   const displayBoard = useGameStore((s) => s.displayBoard);
   const remainingDiceFn = useGameStore((s) => s.remainingDice);
-  const playSingleMove = useGameStore((s) => s.playSingleMove);
+  const playMoves = useGameStore((s) => s.playMoves);
   const playSequence = useGameStore((s) => s.playSequence);
+  const undoPendingMove = useGameStore((s) => s.undoPendingMove);
   const undo = useGameStore((s) => s.undo);
   const redo = useGameStore((s) => s.redo);
   const switchTurn = useGameStore((s) => s.switchTurn);
   const truncateHistoryAt = useGameStore((s) => s.truncateHistoryAt);
   const setEditMode = useGameStore((s) => s.setEditMode);
   const applyEdit = useGameStore((s) => s.applyEdit);
-  const legalDestinationsFrom = useGameStore((s) => s.legalDestinationsFrom);
+  const landingSpotsFrom = useGameStore((s) => s.landingSpotsFrom);
   const currentWarnings = useGameStore((s) => s.currentWarnings);
   const newGame = useGameStore((s) => s.newGame);
   const onlyLegalSequenceFn = useGameStore((s) => s.onlyLegalSequence);
@@ -57,6 +72,10 @@ export function GameScreen() {
   const onlyLegalSequence = game ? onlyLegalSequenceFn() : null;
   const isComputerTurn = game?.mode === 'vsComputer' && game.currentPlayer === COMPUTER_PLAYER;
   const interactive = !!game && !game.editMode && game.turnPhase === 'awaitingMove' && !isComputerTurn && game.status === 'inProgress';
+
+  const boardKey = board ? hashBoard(board) : '';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const hitProbabilities = useMemo(() => (board ? computeBlotHitProbabilities(board) : new Map()), [boardKey]);
 
   // Computer opponent: auto-roll then auto-move.
   useEffect(() => {
@@ -102,41 +121,40 @@ export function GameScreen() {
     }
     if (!interactive) return;
 
+    if (selected === point) {
+      setSelected(null);
+      return;
+    }
+
     if (selected !== null) {
-      const destinations = legalDestinationsFrom(selected);
-      const move = destinations.find((m) => m.to === point);
-      if (move) {
-        playSingleMove(move);
+      const spot = landingSpotsFrom(selected).find((s) => s.to === point);
+      if (spot) {
+        playMoves(spot.moves);
         setSelected(null);
         return;
       }
     }
 
-    const originDestinations = legalDestinationsFrom(point);
-    if (originDestinations.length > 0) {
-      setSelected(point);
-    } else {
-      setSelected(null);
-    }
+    const spots = landingSpotsFrom(point);
+    setSelected(spots.length > 0 ? point : null);
   }
 
   function handleBarClick() {
     if (game!.editMode || !interactive) return;
     if (!mustEnter) return;
-    setSelected('bar');
+    setSelected((prev) => (prev === 'bar' ? null : 'bar'));
   }
 
   function handleBearOffClick(player: 'white' | 'black') {
     if (!interactive || player !== game!.currentPlayer || selected === null) return;
-    const destinations = legalDestinationsFrom(selected);
-    const move = destinations.find((m) => m.to === 'off');
-    if (move) {
-      playSingleMove(move);
+    const spot = landingSpotsFrom(selected).find((s) => s.to === 'off');
+    if (spot) {
+      playMoves(spot.moves);
       setSelected(null);
     }
   }
 
-  const legalDestinations = selected !== null ? legalDestinationsFrom(selected) : [];
+  const landingSpots = selected !== null ? landingSpotsFrom(selected) : [];
 
   async function handleOpenAdvisor() {
     if (!game!.dice.rolled) return;
@@ -154,6 +172,9 @@ export function GameScreen() {
 
   const previewBoard = previewCandidate ? previewCandidate.resultingBoard : board;
 
+  const lastTurn = game.moveHistory[game.moveHistory.length - 1];
+  const lastMovePoints = pendingMoves.length === 0 && lastTurn ? lastTurn.moves.flatMap((m) => [m.from, m.to]) : [];
+
   return (
     <div className="game-screen">
       {game.status === 'won' && (
@@ -169,16 +190,23 @@ export function GameScreen() {
         interactive={interactive && !previewCandidate}
         editMode={game.editMode}
         selected={selected}
-        legalDestinations={previewCandidate ? [] : legalDestinations}
+        destinationPoints={previewCandidate ? [] : landingSpots.map((s) => s.to)}
         onPointClick={handlePointClick}
         onBarClick={handleBarClick}
         onBearOffClick={handleBearOffClick}
         mustEnterFromBar={mustEnter}
+        lastMovePoints={previewCandidate ? [] : lastMovePoints}
+        hitProbabilities={hitProbabilities}
       />
 
       <Dice rolled={game.dice.rolled} remaining={remainingDice} />
       {computerThinking && <div className="thinking-indicator">Computer is thinking…</div>}
-      {interactive && onlyLegalSequence && (
+      {interactive && pendingMoves.length > 0 && (
+        <button type="button" className="btn btn--wide" onClick={undoPendingMove}>
+          Undo Last Move ({pendingMoves[pendingMoves.length - 1].from}/{pendingMoves[pendingMoves.length - 1].to})
+        </button>
+      )}
+      {interactive && pendingMoves.length === 0 && onlyLegalSequence && (
         <button type="button" className="btn btn--primary btn--wide" onClick={() => playSequence(onlyLegalSequence)}>
           Play Only Move ({onlyLegalSequence.map((m) => `${m.from}/${m.to}`).join(' ')})
         </button>
