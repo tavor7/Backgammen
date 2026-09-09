@@ -175,7 +175,13 @@ export function GameScreen() {
   const previewBoard = previewCandidate ? previewCandidate.resultingBoard : board;
 
   const lastTurn = game.moveHistory[game.moveHistory.length - 1];
-  const lastMovePoints = pendingMoves.length === 0 && lastTurn ? lastTurn.moves.flatMap((m) => [m.from, m.to]) : [];
+  // Only the final resting spot of each checker — a move whose destination is immediately reused
+  // as another move's origin was just a pass-through (a single checker playing 2+ dice in a chain),
+  // not a place a checker actually ended up, so it shouldn't get its own highlight.
+  const lastMovePoints =
+    pendingMoves.length === 0 && lastTurn
+      ? lastTurn.moves.filter((m, i) => !lastTurn.moves.slice(i + 1).some((later) => later.from === m.to)).map((m) => m.to)
+      : [];
 
   return (
     <div className="game-screen">
