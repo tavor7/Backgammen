@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useT } from '../../i18n/useT';
+import type { Player } from '../../game/types';
 
 interface DiceProps {
   rolled: [number, number] | null;
@@ -9,6 +10,9 @@ interface DiceProps {
   /** When false, renders the roll statically with no tumble animation and no used/checkmark state —
    * for showing a player's last roll after their turn has ended. */
   interactive?: boolean;
+  /** Colors the die faces like that player's checkers, so whose dice they are reads from the dice
+   * themselves without a text label. */
+  player?: Player;
 }
 
 const PIPS: Record<number, [number, number][]> = {
@@ -37,7 +41,7 @@ function DieFace({ value }: { value: number }) {
  * "a new roll just happened" — tumbles through random faces at a slowing cadence before landing on
  * the real value, each die starting after a small stagger for a natural, non-synchronized feel.
  */
-function Die({ finalValue, used, startDelay, animate }: { finalValue: number; used: boolean; startDelay: number; animate: boolean }) {
+function Die({ finalValue, used, startDelay, animate, player }: { finalValue: number; used: boolean; startDelay: number; animate: boolean; player?: Player }) {
   const [displayValue, setDisplayValue] = useState(finalValue);
   const [rolling, setRolling] = useState(animate);
 
@@ -73,14 +77,14 @@ function Die({ finalValue, used, startDelay, animate }: { finalValue: number; us
   }, []);
 
   return (
-    <div className={`die${used && !rolling ? ' die--used' : ''}${rolling ? ' die--rolling' : ''}`}>
+    <div className={`die${player ? ` die--${player}` : ''}${used && !rolling ? ' die--used' : ''}${rolling ? ' die--rolling' : ''}`}>
       <DieFace value={displayValue} />
       {used && !rolling && <div className="die__check">✓</div>}
     </div>
   );
 }
 
-export function Dice({ rolled, remaining, canRoll = false, onRoll, interactive = true }: DiceProps) {
+export function Dice({ rolled, remaining, canRoll = false, onRoll, interactive = true, player }: DiceProps) {
   const t = useT();
 
   if (!rolled) {
@@ -92,8 +96,8 @@ export function Dice({ rolled, remaining, canRoll = false, onRoll, interactive =
         onClick={onRoll}
         disabled={!canRoll}
       >
-        <div className="dice__placeholder-die" />
-        <div className="dice__placeholder-die" />
+        <div className={`dice__placeholder-die${player ? ` dice__placeholder-die--${player}` : ''}`} />
+        <div className={`dice__placeholder-die${player ? ` dice__placeholder-die--${player}` : ''}`} />
         <span className="dice__empty-label">{canRoll ? t('dice.tapToRoll') : t('dice.rollToBegin')}</span>
       </button>
     );
@@ -108,8 +112,8 @@ export function Dice({ rolled, remaining, canRoll = false, onRoll, interactive =
     const allUsed = interactive && usesLeft === 0;
     return (
       <div className="dice">
-        <Die finalValue={rolled[0]} used={allUsed} startDelay={0} animate={interactive} />
-        <Die finalValue={rolled[0]} used={allUsed} startDelay={90} animate={interactive} />
+        <Die finalValue={rolled[0]} used={allUsed} startDelay={0} animate={interactive} player={player} />
+        <Die finalValue={rolled[0]} used={allUsed} startDelay={90} animate={interactive} player={player} />
         {interactive && usesLeft > 0 && <div className="dice__multiplier">×{usesLeft}</div>}
       </div>
     );
@@ -122,7 +126,7 @@ export function Dice({ rolled, remaining, canRoll = false, onRoll, interactive =
         const idx = remainingCopy.indexOf(value);
         const used = interactive && idx === -1;
         if (idx >= 0) remainingCopy.splice(idx, 1);
-        return <Die key={i} finalValue={value} used={used} startDelay={i * 90} animate={interactive} />;
+        return <Die key={i} finalValue={value} used={used} startDelay={i * 90} animate={interactive} player={player} />;
       })}
     </div>
   );

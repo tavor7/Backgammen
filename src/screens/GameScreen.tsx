@@ -291,7 +291,6 @@ export function GameScreen() {
           return (
             <div key={p} className={`dice-row dice-row--${p}`}>
               <div className={`player-dice${isActive ? ' player-dice--active' : ''}`}>
-                <span className="player-dice__label">{t(`player.${p}`)}</span>
                 {isActive ? (
                   <Dice
                     key={`${game.currentPlayer}-${game.dice.rolled?.join(',') ?? 'none'}-${game.moveHistory.length}`}
@@ -299,10 +298,11 @@ export function GameScreen() {
                     remaining={remainingDice}
                     canRoll={game.turnPhase === 'awaitingRoll' && game.status === 'inProgress' && !game.editMode && (game.mode !== 'vsComputer' || game.currentPlayer === HUMAN_PLAYER)}
                     onRoll={() => rollDice()}
+                    player={p}
                   />
                 ) : (
                   <div className="dice--static">
-                    <Dice rolled={lastRolls[p]} remaining={[]} interactive={false} />
+                    <Dice rolled={lastRolls[p]} remaining={[]} interactive={false} player={p} />
                   </div>
                 )}
               </div>
