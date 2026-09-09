@@ -70,6 +70,13 @@
   max-width: 420px;
 }
 
+.home-screen__credit {
+  margin-top: 32px;
+  color: #7a6a54;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
 .mode-card {
   background: var(--panel-bg);
   border: 1px solid #3d2f1f;
@@ -674,6 +681,8 @@
 .analysis-panel-overlay {
   position: fixed;
   inset: 0;
+  height: 100vh;
+  height: 100dvh;
   /* No scrim: the board stays fully visible and legible above the sheet. */
   background: transparent;
   pointer-events: none;
@@ -688,10 +697,14 @@
   background: var(--panel-bg);
   width: 100%;
   max-width: 480px;
-  max-height: min(56vh, 460px);
+  /* dvh (not vh) accounts for mobile Safari's address bar so the sheet doesn't overshoot the
+     actually-visible viewport; vh is a fallback for browsers without dvh support. */
+  max-height: min(42vh, 380px);
+  max-height: min(42dvh, 380px);
   overflow-y: auto;
   border-radius: 18px 18px 0 0;
   padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 12px;

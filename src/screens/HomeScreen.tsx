@@ -67,6 +67,8 @@ export function HomeScreen() {
           </button>
         </div>
       </div>
+
+      <p className="home-screen__credit">Built by Amit</p>
     </div>
   );
 }
